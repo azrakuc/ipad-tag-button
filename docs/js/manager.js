@@ -4,6 +4,7 @@ import { newId } from './storage.js';
 import { SEPARATORS } from './tags.js';
 import { resizeImage } from './image.js';
 import * as IO from './io.js';
+import * as Extract from './extract.js';
 import { $, el, toast } from './ui.js';
 
 let selCatId = null;
@@ -88,6 +89,7 @@ function render() {
   renderGroups();
   renderTags();
   renderSettings();
+  Extract.refresh();
 }
 
 // --- カテゴリー編集 ---
@@ -365,6 +367,7 @@ export function init() {
   $('i-replace').addEventListener('click', () => applyImport('replace'));
   $('i-append').addEventListener('click', () => applyImport('append'));
 
+  Extract.init({ getTarget: () => ({ cat: selCat(), group: selGroup() }) });
   onChange(render);
   render();
 }

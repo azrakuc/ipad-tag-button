@@ -76,6 +76,21 @@ function toggleCard(tag) {
   refresh();
 }
 
+// 画像画面などから、タグを作業欄に足す。すでにあるタグは足さない。足した件数を返す。
+export function addToWork(items) {
+  let added = 0;
+  for (const t of items) {
+    if (hasKey(t.key)) continue;
+    work.tags.push({ key: t.key, text: t.text });
+    added++;
+  }
+  if (added) {
+    saveWork();
+    refresh();
+  }
+  return added;
+}
+
 function removeChip(key) {
   work.tags = work.tags.filter((t) => t.key !== key);
   pruneSelected();
@@ -140,7 +155,7 @@ function renderCards() {
   const box = $('cards');
   box.replaceChildren();
   if (state.categories.length === 0) {
-    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。右上の「管理」でカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。' }));
+    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。上の「管理」タブでカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。' }));
     return;
   }
   const cat = state.categories.find((c) => c.id === currentCat);
