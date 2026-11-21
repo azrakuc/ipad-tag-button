@@ -384,16 +384,19 @@ dialog h3 { margin: 0 0 12px; font-size: 18px; }
 .tab.active { color: var(--accent-text); background: var(--accent); }
 
 /* --- チップ（切り出し・画像画面で共通） --- */
-.pick-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40dvh; overflow-y: auto; }
+.pick-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.mode-select { width: auto; max-width: 100%; margin-bottom: 8px; }
 .pick {
   min-height: 40px;
-  padding: 0 12px;
+  max-width: 100%;
+  padding: 8px 12px;
   font: inherit;
   font-size: 15px;
   color: var(--text);
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 20px;
+  overflow-wrap: anywhere;
   -webkit-user-select: none;
   user-select: none;
   text-align: left;
@@ -430,14 +433,17 @@ dialog h3 { margin: 0 0 12px; font-size: 18px; }
   align-items: center;
   justify-content: center;
   gap: 12px;
-  min-height: 220px;
+  min-height: 120px;
   padding: 16px;
   background: var(--panel);
   border: 2px dashed var(--line);
   border-radius: 12px;
 }
 .dropzone.over { border-color: var(--accent); background: var(--sel); }
-.dropzone img { max-width: 100%; max-height: 60dvh; object-fit: contain; border-radius: 8px; }
+.dropzone img { max-width: 100%; max-height: 30dvh; object-fit: contain; border-radius: 8px; }
+@media (orientation: landscape) {
+  .dropzone img { max-height: 60dvh; }
+}
 .i-result-col { min-width: 0; }
 .i-result-col > #i-result,
 .i-result-col > details {

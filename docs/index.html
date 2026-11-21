@@ -96,6 +96,11 @@
 
         <div class="field">
           <span>② タグに分けたもの（タップで内容に追加。薄い色は登録済み）</span>
+          <select class="mode-select" id="x-mode" aria-label="分け方">
+            <option value="comma">カンマで分ける</option>
+            <option value="sentence">文で分ける（文章形式向け）</option>
+            <option value="whole">分けない</option>
+          </select>
           <div id="x-chips" class="pick-list"></div>
         </div>
 
@@ -167,6 +172,11 @@
             <h2>ポジティブ</h2>
             <button id="i-copy-pos" class="btn" type="button">コピー</button>
           </div>
+          <select class="mode-select" id="i-mode" aria-label="分け方">
+            <option value="comma">カンマで分ける</option>
+            <option value="sentence">文で分ける（文章形式向け）</option>
+            <option value="whole">分けない</option>
+          </select>
           <div id="i-pos" class="pick-list"></div>
           <div class="box-head i-gap">
             <h2>ネガティブ</h2>
