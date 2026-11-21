@@ -42,6 +42,13 @@ function setupServiceWorker() {
 }
 
 async function main() {
+  // 他の初期化が失敗しても、画面の切り替えと更新の案内は動くように、先に設定する。
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.addEventListener('click', () => showView(tab.dataset.view));
+  }
+  showView('builder');
+  setupServiceWorker();
+
   // ストレージの永続化を要求する（失敗しても動作には影響しない）
   navigator.storage?.persist?.().catch(() => {});
 
@@ -52,18 +59,12 @@ async function main() {
   }
   initBuilder();
   initManager();
-
   initImage({
     onExtract: (text, file) => {
       showView('manager');
       receive(text, file);
     },
   });
-  for (const tab of document.querySelectorAll('.tab')) {
-    tab.addEventListener('click', () => showView(tab.dataset.view));
-  }
-  showView('builder');
-  setupServiceWorker();
 }
 
 main();
