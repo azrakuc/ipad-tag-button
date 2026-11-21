@@ -19,7 +19,11 @@
 <div id="app">
   <header class="topbar">
     <h1>Tag Button</h1>
-    <button id="view-toggle" class="btn" type="button" aria-label="管理画面を開く">⚙ 管理</button>
+    <nav class="tabs" role="tablist" aria-label="画面">
+      <button class="tab" type="button" role="tab" data-view="builder">作成</button>
+      <button class="tab" type="button" role="tab" data-view="manager">管理</button>
+      <button class="tab" type="button" role="tab" data-view="image">画像</button>
+    </nav>
   </header>
 
   <div id="update-banner" class="banner" hidden>
@@ -74,6 +78,50 @@
         </div>
       </div>
 
+      <!-- プロンプトの切り出し -->
+      <div class="card-box" id="x-box">
+        <div class="box-head"><h2>プロンプトの切り出し</h2></div>
+
+        <div class="field">
+          <span>① 元のプロンプト（貼り付けるか、画像から読み込む）</span>
+          <textarea id="x-source" rows="6"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            placeholder="ここに長いプロンプトを貼り付けます"></textarea>
+          <div class="row-actions">
+            <button id="x-image" class="btn" type="button">画像から</button>
+            <button id="x-clear" class="btn" type="button">クリア</button>
+            <input id="x-image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+          </div>
+        </div>
+
+        <div class="field">
+          <span>② タグに分けたもの（タップで内容に追加。薄い色は登録済み）</span>
+          <div id="x-chips" class="pick-list"></div>
+        </div>
+
+        <div class="field">
+          <span>③ 新しいタグ</span>
+          <p id="x-target" class="muted x-target"></p>
+          <input id="x-name" type="text" maxlength="100" placeholder="名前"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+          <textarea id="x-content" rows="3" maxlength="5000" placeholder="内容（②のタップで入ります。手で直すこともできます）"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+          <div class="x-thumb">
+            <img id="x-thumb" alt="" hidden>
+            <button id="x-thumb-pick" class="btn" type="button">サムネイルを選ぶ</button>
+            <button id="x-thumb-src" class="btn" type="button" hidden>元の画像を使う</button>
+            <button id="x-thumb-del" class="btn" type="button" hidden>外す</button>
+            <input id="x-thumb-file" type="file" accept="image/*" hidden>
+          </div>
+        </div>
+        <div class="row-actions">
+          <button id="x-append" class="btn" type="button">既存のタグに追記</button>
+          <button id="x-unselect" class="btn" type="button">選択を解除</button>
+          <span class="spacer"></span>
+          <button id="x-register" class="btn btn-primary" type="button">登録</button>
+        </div>
+      </div>
+
       <div class="card-box">
         <div class="box-head"><h2>設定</h2></div>
         <label class="field">
@@ -101,6 +149,41 @@
       </div>
 
       <p class="credit">created by azrakuc</p>
+    </section>
+
+    <!-- 画像画面 -->
+    <section id="view-image" hidden>
+      <div id="i-drop" class="dropzone">
+        <p id="i-drop-text" class="muted">ここに画像をドロップ（PNG / JPEG / WebP）</p>
+        <img id="i-preview" alt="" hidden>
+        <button id="i-pick" class="btn btn-primary" type="button">画像を選ぶ</button>
+        <input id="i-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+      </div>
+      <div class="i-result-col">
+        <p id="i-msg" class="muted">画像を選ぶと、入っているプロンプトを取り出します。画像は iPad の中で読むだけで、どこにも送信・保存しません。</p>
+        <div id="i-result" hidden>
+          <p id="i-source" class="panel-title"></p>
+          <div class="box-head">
+            <h2>ポジティブ</h2>
+            <button id="i-copy-pos" class="btn" type="button">コピー</button>
+          </div>
+          <div id="i-pos" class="pick-list"></div>
+          <div class="box-head i-gap">
+            <h2>ネガティブ</h2>
+            <button id="i-copy-neg" class="btn" type="button">コピー</button>
+          </div>
+          <p id="i-neg" class="pre i-neg"></p>
+          <dl id="i-settings" class="i-settings"></dl>
+          <div class="row-actions">
+            <button id="i-add" class="btn" type="button">作業欄に追加</button>
+            <button id="i-extract" class="btn btn-primary" type="button">管理で切り出す</button>
+          </div>
+        </div>
+        <details id="i-raw" hidden>
+          <summary>元のデータをすべて表示</summary>
+          <div id="i-raw-body"></div>
+        </details>
+      </div>
     </section>
   </main>
 
@@ -187,6 +270,27 @@
     <span class="spacer"></span>
     <button id="i-append" class="btn" type="button">追加</button>
     <button id="i-replace" class="btn btn-danger" type="button">全置換</button>
+  </div>
+</dialog>
+
+<!-- 切り出し元の置き換え確認 -->
+<dialog id="dlg-source">
+  <h3>元のプロンプトに入れる</h3>
+  <p>元のプロンプトにはすでに内容があります。</p>
+  <div class="dlg-actions">
+    <button id="s-cancel" class="btn" type="button">キャンセル</button>
+    <span class="spacer"></span>
+    <button id="s-add" class="btn" type="button">末尾に足す</button>
+    <button id="s-replace" class="btn btn-danger" type="button">置き換える</button>
+  </div>
+</dialog>
+
+<!-- 既存のタグに追記 -->
+<dialog id="dlg-append">
+  <h3>どのタグに追記しますか</h3>
+  <ul id="a-list" class="m-list"></ul>
+  <div class="dlg-actions">
+    <button id="a-cancel" class="btn" type="button">キャンセル</button>
   </div>
 </dialog>
 

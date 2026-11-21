@@ -2,14 +2,19 @@
 import { init as initState } from './state.js';
 import { init as initBuilder } from './builder.js';
 import { init as initManager } from './manager.js';
+import { init as initImage } from './imageview.js';
+import { receive } from './extract.js';
 import { $ } from './ui.js';
 
+const VIEWS = ['builder', 'manager', 'image'];
+
 function showView(name) {
-  const manager = name === 'manager';
-  $('view-builder').hidden = manager;
-  $('view-manager').hidden = !manager;
-  $('view-toggle').textContent = manager ? '← 作成' : '⚙ 管理';
-  $('view-toggle').setAttribute('aria-label', manager ? '作成画面に戻る' : '管理画面を開く');
+  for (const v of VIEWS) $(`view-${v}`).hidden = v !== name;
+  for (const tab of document.querySelectorAll('.tab')) {
+    const on = tab.dataset.view === name;
+    tab.classList.toggle('active', on);
+    tab.setAttribute('aria-selected', String(on));
+  }
 }
 
 function setupServiceWorker() {
@@ -37,6 +42,13 @@ function setupServiceWorker() {
 }
 
 async function main() {
+  // 他の初期化が失敗しても、画面の切り替えと更新の案内は動くように、先に設定する。
+  for (const tab of document.querySelectorAll('.tab')) {
+    tab.addEventListener('click', () => showView(tab.dataset.view));
+  }
+  showView('builder');
+  setupServiceWorker();
+
   // ストレージの永続化を要求する（失敗しても動作には影響しない）
   navigator.storage?.persist?.().catch(() => {});
 
@@ -47,14 +59,12 @@ async function main() {
   }
   initBuilder();
   initManager();
-
-  let view = 'builder';
-  $('view-toggle').addEventListener('click', () => {
-    view = view === 'builder' ? 'manager' : 'builder';
-    showView(view);
+  initImage({
+    onExtract: (text, file) => {
+      showView('manager');
+      receive(text, file);
+    },
   });
-  showView(view);
-  setupServiceWorker();
 }
 
 main();

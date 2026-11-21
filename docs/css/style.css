@@ -80,6 +80,7 @@ html, body {
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--accent-text); }
 .btn-danger { color: var(--danger); }
 .btn-wide { flex: 1; }
+.btn:disabled { opacity: 0.4; }
 
 .muted { color: var(--muted); font-size: 14px; margin: 8px 0 0; }
 .pre { white-space: pre-wrap; }
@@ -366,3 +367,91 @@ dialog h3 { margin: 0 0 12px; font-size: 18px; }
 .dlg-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .thumb-box { display: flex; align-items: flex-end; gap: 12px; margin-top: 8px; }
 .thumb-box img { max-width: 96px; max-height: 96px; border-radius: 8px; }
+
+/* --- タブ --- */
+.tabs { display: flex; gap: 4px; }
+.tab {
+  min-height: 44px;
+  padding: 0 18px;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.tab.active { color: var(--accent-text); background: var(--accent); }
+
+/* --- チップ（切り出し・画像画面で共通） --- */
+.pick-list { display: flex; flex-wrap: wrap; gap: 6px; max-height: 40dvh; overflow-y: auto; }
+.pick {
+  min-height: 40px;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  -webkit-user-select: none;
+  user-select: none;
+  text-align: left;
+}
+.pick.on { background: var(--sel); border-color: var(--accent); }
+.pick.done { opacity: 0.45; }
+
+/* --- 切り出しフォーム --- */
+#x-box textarea { margin-bottom: 8px; }
+#x-box input[type="text"] { margin-bottom: 8px; }
+.x-target { margin: 0 0 8px; }
+.x-thumb { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.x-thumb img { width: 44px; height: 44px; object-fit: cover; border-radius: 8px; }
+#a-list { max-height: 60dvh; overflow-y: auto; }
+#a-list .m-main { padding: 6px 0; }
+
+/* --- 画像画面 --- */
+#view-image {
+  flex: 1;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  gap: 12px;
+  padding: 12px;
+  -webkit-overflow-scrolling: touch;
+}
+@media (orientation: landscape) {
+  #view-image { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 220px;
+  padding: 16px;
+  background: var(--panel);
+  border: 2px dashed var(--line);
+  border-radius: 12px;
+}
+.dropzone.over { border-color: var(--accent); background: var(--sel); }
+.dropzone img { max-width: 100%; max-height: 60dvh; object-fit: contain; border-radius: 8px; }
+.i-result-col { min-width: 0; }
+.i-result-col > #i-result,
+.i-result-col > details {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+.i-gap { margin-top: 12px; }
+.i-neg { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+.i-settings { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 12px 0; font-size: 14px; }
+.i-settings dt { color: var(--muted); }
+.i-settings dd { margin: 0; overflow-wrap: anywhere; }
+details > summary { min-height: 44px; display: flex; align-items: center; }
+.raw-item { margin-bottom: 8px; }
+.raw-text { margin: 4px 0 0; padding: 8px; max-height: 240px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; background: var(--bg); border-radius: 8px; }
