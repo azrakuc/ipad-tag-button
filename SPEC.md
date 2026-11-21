@@ -36,7 +36,7 @@
 - 公開先：
   - リポジトリ：<https://github.com/azrakuc/ipad-tag-button>（公開リポジトリ）
   - 公開ページ：<https://azrakuc.github.io/ipad-tag-button/>
-  - `main` ブランチの直下を GitHub Pages で公開する（ビルドは不要）。
+  - `main` ブランチの **`/docs` フォルダ**を GitHub Pages で公開する（ビルドは不要）。アプリ本体は `docs/` に置き、SPEC.md と README.md はリポジトリの直下に置く。
 - 配信されるのはアプリのファイルだけで、登録したタグは iPad 内の IndexedDB にしか保存されない（詳しくは「9. セキュリティ」）。
 - ページはサブパス（`/ipad-tag-button/`）で公開されるため、ファイルの参照はすべて相対パスにする。manifest の `start_url` と `scope` は `/ipad-tag-button/` にする。
 
@@ -246,22 +246,23 @@
 
 ```text
 ipad-tag-button/
-├── index.html
-├── manifest.webmanifest
-├── sw.js
-├── css/style.css
-├── js/
-│   ├── app.js          # 起動、画面の切り替え
-│   ├── storage.js      # IndexedDB。元の storage.js の normalize 処理を移植する
-│   ├── tags.js         # タグの分割、重複判定、つなぎ方
-│   ├── state.js        # 画面どうしで共有するデータと、変更の通知
-│   ├── ui.js           # 小さな道具（要素の作成、トースト）
-│   ├── builder.js      # 作成画面
-│   ├── manager.js      # 管理画面
-│   ├── io.js           # インポート、エクスポート
-│   └── image.js        # サムネイルの縮小（元の resizeImage に PNG の代替処理を追加）
-├── vendor/Sortable.min.js
-├── icons/
+├── docs/               # 公開されるアプリ本体
+│   ├── index.html
+│   ├── manifest.webmanifest
+│   ├── sw.js
+│   ├── css/style.css
+│   ├── js/
+│   │   ├── app.js          # 起動、画面の切り替え
+│   │   ├── storage.js      # IndexedDB。元の storage.js の normalize 処理を移植する
+│   │   ├── tags.js         # タグの分割、重複判定、つなぎ方
+│   │   ├── state.js        # 画面どうしで共有するデータと、変更の通知
+│   │   ├── ui.js           # 小さな道具（要素の作成、トースト）
+│   │   ├── builder.js      # 作成画面
+│   │   ├── manager.js      # 管理画面
+│   │   ├── io.js           # インポート、エクスポート
+│   │   └── image.js        # サムネイルの縮小（元の resizeImage に PNG の代替処理を追加）
+│   ├── vendor/Sortable.min.js
+│   └── icons/
 ├── .gitignore          # バックアップの JSON をコミットしないようにする
 ├── README.md           # 使い方、Sortable.js の版とライセンス
 └── SPEC.md
