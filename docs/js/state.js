@@ -7,6 +7,21 @@ export const state = {
   meta: {},
 };
 
+// --- カテゴリー > グループ > タグ の検索 ---
+export const catTags = (cat) => cat.groups.flatMap((g) => g.tags);
+
+export function locateTag(id) {
+  for (const cat of state.categories) {
+    for (const group of cat.groups) {
+      const tag = group.tags.find((t) => t.id === id);
+      if (tag) return { cat, group, tag };
+    }
+  }
+  return null;
+}
+
+export const findTag = (id) => locateTag(id)?.tag ?? null;
+
 const listeners = new Set();
 export const onChange = (fn) => listeners.add(fn);
 export const emit = () => listeners.forEach((fn) => fn());

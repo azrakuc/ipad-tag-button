@@ -1,16 +1,18 @@
 // 作成画面：タグカードをタップしてプロンプトを組み立てる。
-import { state, onChange } from './state.js';
+import { state, onChange, findTag, catTags } from './state.js';
 import { splitTags, joinTags } from './tags.js';
 import { $, el, toast } from './ui.js';
 
 const WORK_KEY = 'itb:work';
 const LAST_KEY = 'itb:lastCategory';
+const COLLAPSED_KEY = 'itb:collapsedGroups';
 const LONG_PRESS_MS = 500;
 
 // 作業中の状態：work.tags = 並び順どおりのタグ [{ key, text }]、work.selected = 選択中のカード ID
 let work = loadWork();
 let currentCat = localStorage.getItem(LAST_KEY);
 let reorder = false;
+let collapsed = loadCollapsed();
 let chipSorter;
 
 function loadWork() {
@@ -34,12 +36,13 @@ function saveWork() {
   }
 }
 
-function findTag(id) {
-  for (const cat of state.categories) {
-    const tag = cat.tags.find((t) => t.id === id);
-    if (tag) return tag;
+function loadCollapsed() {
+  try {
+    const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY));
+    return new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
+  } catch {
+    return new Set();
   }
-  return null;
 }
 
 const hasKey = (key) => work.tags.some((t) => t.key === key);
@@ -137,15 +140,40 @@ function renderCards() {
   const box = $('cards');
   box.replaceChildren();
   if (state.categories.length === 0) {
-    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。右上の「管理」でカテゴリーとタグを登録するか、元の拡張機能の JSON を読み込んでください。' }));
+    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。右上の「管理」でカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。' }));
     return;
   }
   const cat = state.categories.find((c) => c.id === currentCat);
-  if (!cat || cat.tags.length === 0) {
+  if (!cat || catTags(cat).length === 0) {
     box.append(el('p', { className: 'empty', textContent: 'このカテゴリーにはタグがありません。' }));
     return;
   }
-  for (const tag of cat.tags) box.append(cardFor(tag));
+  for (const group of cat.groups) {
+    if (group.tags.length === 0) continue;
+    const open = !collapsed.has(group.id);
+    const head = el('button', { type: 'button', className: 'group-head' }, [
+      el('span', { className: 'group-arrow', textContent: open ? '▼' : '▶' }),
+      el('span', { textContent: `${group.name}（${group.tags.length}）` }),
+    ]);
+    head.setAttribute('aria-expanded', String(open));
+    const grid = el('div', { className: 'group-cards' });
+    grid.hidden = !open;
+    for (const tag of group.tags) grid.append(cardFor(tag));
+    head.addEventListener('click', () => {
+      const nowOpen = grid.hidden; // 閉じていたら開く
+      grid.hidden = !nowOpen;
+      head.setAttribute('aria-expanded', String(nowOpen));
+      head.firstChild.textContent = nowOpen ? '▼' : '▶';
+      if (nowOpen) collapsed.delete(group.id);
+      else collapsed.add(group.id);
+      try {
+        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]));
+      } catch {
+        // 保存できなくても動作には影響しない
+      }
+    });
+    box.append(el('section', { className: 'group' }, [head, grid]));
+  }
   updateCardSelection();
 }
 

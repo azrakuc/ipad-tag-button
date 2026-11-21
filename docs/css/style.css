@@ -142,12 +142,30 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  padding: 4px 12px 12px;
+}
+.group-head {
+  width: 100%;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 0 4px;
+  font: inherit;
+  font-weight: 600;
+  color: var(--text);
+  background: none;
+  border: 0;
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.group-arrow { width: 1.2em; color: var(--muted); font-size: 13px; }
+.group-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  grid-auto-rows: max-content;
   gap: 10px;
-  padding: 12px;
-  align-content: start;
 }
 
 .card {
@@ -269,7 +287,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #view-manager { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
 .m-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
 @media (orientation: landscape) {
-  .m-grid { grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); }
+  .m-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 .card-box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
 .m-grid .card-box { margin-bottom: 0; }

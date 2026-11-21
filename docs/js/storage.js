@@ -1,6 +1,7 @@
 // IndexedDB への保存と、データの検証・整形。
 // データ形式は元の Chrome 拡張機能（tag_button）と同じ：
-//   [{ id, categoryName, tags: [{ id, name, content, thumbnail }] }]
+//   [{ id, categoryName, groups: [{ id, name, tags: [{ id, name, content, thumbnail }] }] }]
+// （元の拡張機能は groups のない [{ id, categoryName, tags }]。読み込み時に変換する）
 
 const DB_NAME = 'ipad-tag-button';
 const STORE = 'kv';
@@ -34,30 +35,51 @@ function normalizeTag(raw, seenIds, counts) {
 }
 
 // 不正な項目は捨てて件数を数える。いちばん外側が配列でなければ例外を投げる。
+// 形式：[{ id, categoryName, groups: [{ id, name, tags: [...] }] }]
+// 元の拡張機能の形式（groups がなく tags だけ）は、1 つのグループ「タグ」にまとめて読み込む。
 export function normalizeCategories(data) {
   if (!Array.isArray(data)) throw new Error('形式が正しくありません（配列ではありません）。');
   const seenIds = new Set();
+  const uniqueId = (raw) => {
+    let id = isText(raw) ? raw : newId();
+    if (seenIds.has(id)) id = newId();
+    seenIds.add(id);
+    return id;
+  };
   const categories = [];
   const counts = { tooLarge: 0 };
   let skippedCategories = 0;
+  let skippedGroups = 0;
   let skippedTags = 0;
+
   for (const c of data) {
     if (!c || typeof c !== 'object' || !isText(c.categoryName) || c.categoryName.length > LIMITS.name) {
       skippedCategories++;
       continue;
     }
-    let id = isText(c.id) ? c.id : newId();
-    if (seenIds.has(id)) id = newId();
-    seenIds.add(id);
-    const tags = [];
-    for (const t of Array.isArray(c.tags) ? c.tags : []) {
-      const tag = normalizeTag(t, seenIds, counts);
-      if (tag) tags.push(tag);
-      else skippedTags++;
+    const catId = uniqueId(c.id);
+    let rawGroups;
+    if (Array.isArray(c.groups)) rawGroups = c.groups;
+    else rawGroups = Array.isArray(c.tags) && c.tags.length > 0 ? [{ name: 'タグ', tags: c.tags }] : [];
+
+    const groups = [];
+    for (const g of rawGroups) {
+      if (!g || typeof g !== 'object' || !isText(g.name) || g.name.length > LIMITS.name) {
+        skippedGroups++;
+        continue;
+      }
+      const groupId = uniqueId(g.id);
+      const tags = [];
+      for (const t of Array.isArray(g.tags) ? g.tags : []) {
+        const tag = normalizeTag(t, seenIds, counts);
+        if (tag) tags.push(tag);
+        else skippedTags++;
+      }
+      groups.push({ id: groupId, name: g.name, tags });
     }
-    categories.push({ id, categoryName: c.categoryName, tags });
+    categories.push({ id: catId, categoryName: c.categoryName, groups });
   }
-  return { categories, skippedCategories, skippedTags };
+  return { categories, skippedCategories, skippedGroups, skippedTags };
 }
 
 // --- IndexedDB（キーと値だけの単純な保存領域）---

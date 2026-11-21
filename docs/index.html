@@ -60,6 +60,13 @@
         </div>
         <div class="card-box">
           <div class="box-head">
+            <h2 id="m-groups-title">グループ</h2>
+            <button id="m-add-group" class="btn btn-primary" type="button">＋ 追加</button>
+          </div>
+          <ul id="m-groups" class="m-list"></ul>
+        </div>
+        <div class="card-box">
+          <div class="box-head">
             <h2 id="m-tags-title">タグ</h2>
             <button id="m-add-tag" class="btn btn-primary" type="button">＋ 追加</button>
           </div>
@@ -114,6 +121,22 @@
   </div>
 </dialog>
 
+<!-- グループ編集 -->
+<dialog id="dlg-group">
+  <h3 id="g-title">グループ</h3>
+  <label class="field">
+    <span>グループ名（例：衣装、表情）</span>
+    <input id="g-name" type="text" maxlength="100"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  </label>
+  <div class="dlg-actions">
+    <button id="g-del" class="btn btn-danger" type="button">削除</button>
+    <span class="spacer"></span>
+    <button id="g-cancel" class="btn" type="button">キャンセル</button>
+    <button id="g-save" class="btn btn-primary" type="button">保存</button>
+  </div>
+</dialog>
+
 <!-- タグ編集 -->
 <dialog id="dlg-tag">
   <h3 id="t-title">タグ</h3>
@@ -130,6 +153,10 @@
   <label class="field">
     <span>カテゴリー</span>
     <select id="t-cat"></select>
+  </label>
+  <label class="field">
+    <span>グループ</span>
+    <select id="t-group"></select>
   </label>
   <div class="field">
     <span>サムネイル（任意）</span>

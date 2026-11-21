@@ -1,5 +1,5 @@
 // JSON のインポート・エクスポート。
-import { state, updateMeta } from './state.js';
+import { state, updateMeta, catTags } from './state.js';
 import { LIMITS, newId, normalizeCategories } from './storage.js';
 import { normKey } from './tags.js';
 
@@ -9,8 +9,12 @@ const today = () => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 };
 
+// 元の拡張機能（グループを知らない）でも読めるように、全タグをまとめた tags も付けて書き出す。
+// この形式を読み込むときは groups を優先し、tags は使わない。
+const toExport = (categories) => categories.map((c) => ({ ...c, tags: catTags(c) }));
+
 function makeFile() {
-  const json = JSON.stringify(state.categories, null, 2);
+  const json = JSON.stringify(toExport(state.categories), null, 2);
   return new File([json], `tag-button-backup-${today()}.json`, { type: 'application/json' });
 }
 
@@ -54,37 +58,46 @@ export async function parseFile(file) {
   return result;
 }
 
-export const countTags = (categories) => categories.reduce((n, c) => n + c.tags.length, 0);
+export const countTags = (categories) => categories.reduce((n, c) => n + catTags(c).length, 0);
+export const countGroups = (categories) => categories.reduce((n, c) => n + c.groups.length, 0);
 
 const dupKey = (t) => `${normKey(t.name)}\u0000${normKey(t.content)}`;
 
 // 今のデータに追加した結果を返す（今のデータは変更しない）。
-// 同じ名前のカテゴリーには、名前と内容がどちらも同じでないタグだけを足す。
+// 同じ名前のカテゴリー・グループは統合し、名前と内容がどちらも同じタグは読み込まない。
 export function mergeAppend(current, imported) {
-  const result = current.map((c) => ({ ...c, tags: [...c.tags] }));
-  const usedIds = new Set(result.flatMap((c) => [c.id, ...c.tags.map((t) => t.id)]));
-  const fresh = (id) => (usedIds.has(id) ? newId() : id);
+  const result = current.map((c) => ({ ...c, groups: c.groups.map((g) => ({ ...g, tags: [...g.tags] })) }));
+  const usedIds = new Set(result.flatMap((c) => [c.id, ...c.groups.flatMap((g) => [g.id, ...g.tags.map((t) => t.id)])]));
+  const fresh = (id) => {
+    const v = usedIds.has(id) ? newId() : id;
+    usedIds.add(v);
+    return v;
+  };
   let addedTags = 0;
   let duplicateTags = 0;
 
   for (const inc of imported) {
-    let target = result.find((c) => c.categoryName === inc.categoryName);
-    if (!target) {
-      target = { id: fresh(inc.id), categoryName: inc.categoryName, tags: [] };
-      usedIds.add(target.id);
-      result.push(target);
+    let cat = result.find((c) => c.categoryName === inc.categoryName);
+    if (!cat) {
+      cat = { id: fresh(inc.id), categoryName: inc.categoryName, groups: [] };
+      result.push(cat);
     }
-    const seen = new Set(target.tags.map(dupKey));
-    for (const t of inc.tags) {
-      if (seen.has(dupKey(t))) {
-        duplicateTags++;
-        continue;
+    for (const g of inc.groups) {
+      let group = cat.groups.find((x) => x.name === g.name);
+      if (!group) {
+        group = { id: fresh(g.id), name: g.name, tags: [] };
+        cat.groups.push(group);
       }
-      seen.add(dupKey(t));
-      const tag = { ...t, id: fresh(t.id) };
-      usedIds.add(tag.id);
-      target.tags.push(tag);
-      addedTags++;
+      const seen = new Set(group.tags.map(dupKey));
+      for (const t of g.tags) {
+        if (seen.has(dupKey(t))) {
+          duplicateTags++;
+          continue;
+        }
+        seen.add(dupKey(t));
+        group.tags.push({ ...t, id: fresh(t.id) });
+        addedTags++;
+      }
     }
   }
   return { categories: result, addedTags, duplicateTags };
