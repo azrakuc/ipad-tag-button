@@ -1,0 +1,7 @@
+# バックアップの JSON は公開しない
+tag-button-backup-*.json
+*.backup.json
+
+.DS_Store
+Thumbs.db
+.vscode/

@@ -1,0 +1,253 @@
+// 作成画面：タグカードをタップしてプロンプトを組み立てる。
+import { state, onChange } from './state.js';
+import { splitTags, joinTags } from './tags.js';
+import { $, el, toast } from './ui.js';
+
+const WORK_KEY = 'itb:work';
+const LAST_KEY = 'itb:lastCategory';
+const LONG_PRESS_MS = 500;
+
+// 作業中の状態：work.tags = 並び順どおりのタグ [{ key, text }]、work.selected = 選択中のカード ID
+let work = loadWork();
+let currentCat = localStorage.getItem(LAST_KEY);
+let reorder = false;
+let chipSorter;
+
+function loadWork() {
+  try {
+    const w = JSON.parse(localStorage.getItem(WORK_KEY));
+    const tags = Array.isArray(w?.tags)
+      ? w.tags.filter((t) => t && typeof t.key === 'string' && typeof t.text === 'string')
+      : [];
+    const selected = Array.isArray(w?.selected) ? w.selected.filter((s) => typeof s === 'string') : [];
+    return { tags, selected };
+  } catch {
+    return { tags: [], selected: [] };
+  }
+}
+
+function saveWork() {
+  try {
+    localStorage.setItem(WORK_KEY, JSON.stringify(work));
+  } catch {
+    // 保存できなくても動作には影響しない
+  }
+}
+
+function findTag(id) {
+  for (const cat of state.categories) {
+    const tag = cat.tags.find((t) => t.id === id);
+    if (tag) return tag;
+  }
+  return null;
+}
+
+const hasKey = (key) => work.tags.some((t) => t.key === key);
+
+// 選択中のカードのうち、作業欄にタグが 1 つも残っていないものと、存在しないものを外す。
+function pruneSelected() {
+  work.selected = work.selected.filter((id) => {
+    const tag = findTag(id);
+    return tag && splitTags(tag.content).some((t) => hasKey(t.key));
+  });
+}
+
+function toggleCard(tag) {
+  const index = work.selected.indexOf(tag.id);
+  const mine = splitTags(tag.content);
+  if (index < 0) {
+    work.selected.push(tag.id);
+    for (const t of mine) if (!hasKey(t.key)) work.tags.push(t);
+  } else {
+    work.selected.splice(index, 1);
+    // 他の選択中カードにも含まれるタグは残す
+    const keep = new Set();
+    for (const id of work.selected) {
+      const other = findTag(id);
+      if (other) splitTags(other.content).forEach((t) => keep.add(t.key));
+    }
+    const drop = new Set(mine.map((t) => t.key));
+    work.tags = work.tags.filter((t) => !drop.has(t.key) || keep.has(t.key));
+  }
+  saveWork();
+  refresh();
+}
+
+function removeChip(key) {
+  work.tags = work.tags.filter((t) => t.key !== key);
+  pruneSelected();
+  saveWork();
+  refresh();
+}
+
+// --- 描画 ---
+function renderCats() {
+  const bar = $('cats');
+  bar.replaceChildren();
+  for (const cat of state.categories) {
+    const btn = el('button', {
+      type: 'button',
+      className: 'cat-btn' + (cat.id === currentCat ? ' active' : ''),
+      textContent: cat.categoryName,
+    });
+    btn.addEventListener('click', () => {
+      currentCat = cat.id;
+      localStorage.setItem(LAST_KEY, cat.id);
+      renderCats();
+      renderCards();
+      $('cards').scrollTop = 0;
+    });
+    bar.append(btn);
+  }
+}
+
+function cardFor(tag) {
+  const card = el('button', { type: 'button', className: 'card' });
+  card.dataset.id = tag.id;
+  const img = el('div', { className: 'card-img' });
+  if (tag.thumbnail) img.append(el('img', { src: tag.thumbnail, alt: '', draggable: false }));
+  else img.textContent = Array.from(tag.name).slice(0, 2).join('').toUpperCase();
+  card.append(img, el('div', { className: 'card-name', textContent: tag.name }));
+
+  // 長押しでタグの内容を表示する
+  let timer;
+  let fired = false;
+  card.addEventListener('pointerdown', () => {
+    fired = false;
+    timer = setTimeout(() => {
+      fired = true;
+      toast(`${tag.name}： ${tag.content}`, { ms: 4000 });
+    }, LONG_PRESS_MS);
+  });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) {
+    card.addEventListener(ev, () => clearTimeout(timer));
+  }
+  card.addEventListener('contextmenu', (e) => e.preventDefault());
+  card.addEventListener('click', () => {
+    if (fired) {
+      fired = false;
+      return;
+    }
+    toggleCard(tag);
+  });
+  return card;
+}
+
+function renderCards() {
+  const box = $('cards');
+  box.replaceChildren();
+  if (state.categories.length === 0) {
+    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。右上の「管理」でカテゴリーとタグを登録するか、元の拡張機能の JSON を読み込んでください。' }));
+    return;
+  }
+  const cat = state.categories.find((c) => c.id === currentCat);
+  if (!cat || cat.tags.length === 0) {
+    box.append(el('p', { className: 'empty', textContent: 'このカテゴリーにはタグがありません。' }));
+    return;
+  }
+  for (const tag of cat.tags) box.append(cardFor(tag));
+  updateCardSelection();
+}
+
+function updateCardSelection() {
+  for (const card of $('cards').querySelectorAll('.card')) {
+    const on = work.selected.includes(card.dataset.id);
+    card.classList.toggle('selected', on);
+    card.setAttribute('aria-pressed', String(on));
+  }
+}
+
+function renderChips() {
+  const box = $('chips');
+  box.replaceChildren();
+  if (work.tags.length === 0) {
+    box.append(el('p', { className: 'empty small', textContent: 'カードをタップするとここに追加されます。' }));
+    return;
+  }
+  for (const t of work.tags) {
+    const chip = el('span', { className: 'chip' }, [el('span', { textContent: t.text })]);
+    chip.dataset.key = t.key;
+    const x = el('button', { type: 'button', className: 'chip-x', textContent: '×' });
+    x.setAttribute('aria-label', `${t.text} を削除`);
+    x.addEventListener('click', () => removeChip(t.key));
+    chip.append(x);
+    box.append(chip);
+  }
+}
+
+function refresh() {
+  updateCardSelection();
+  renderChips();
+  $('output').value = joinTags(work.tags.map((t) => t.text), state.settings.separator);
+}
+
+function render() {
+  if (!state.categories.some((c) => c.id === currentCat)) currentCat = state.categories[0]?.id ?? null;
+  pruneSelected();
+  saveWork();
+  renderCats();
+  renderCards();
+  refresh();
+}
+
+// --- 操作 ---
+async function copy() {
+  const out = $('output');
+  const text = out.value;
+  if (!text) return toast('コピーするタグがありません');
+  try {
+    await navigator.clipboard.writeText(text);
+    toast('コピーしました');
+  } catch {
+    out.focus();
+    out.select();
+    out.setSelectionRange(0, text.length);
+    toast('自動でコピーできませんでした。選択された文字を手動でコピーしてください', { ms: 4000 });
+  }
+}
+
+function clearAll() {
+  if (work.tags.length === 0 && work.selected.length === 0) return;
+  const backup = { tags: work.tags, selected: work.selected };
+  work = { tags: [], selected: [] };
+  saveWork();
+  refresh();
+  toast('クリアしました', {
+    label: '元に戻す',
+    ms: 6000,
+    onAction: () => {
+      work = backup;
+      pruneSelected();
+      saveWork();
+      refresh();
+    },
+  });
+}
+
+function setReorder(on) {
+  reorder = on;
+  chipSorter.option('disabled', !on);
+  $('chips').classList.toggle('reorder', on);
+  $('reorder-btn').setAttribute('aria-pressed', String(on));
+  $('reorder-btn').textContent = on ? '並べ替え終了' : '並べ替え';
+}
+
+export function init() {
+  chipSorter = Sortable.create($('chips'), {
+    disabled: true,
+    animation: 0,
+    delay: 100,
+    delayOnTouchOnly: true,
+    onEnd: () => {
+      const byKey = new Map(work.tags.map((t) => [t.key, t]));
+      work.tags = [...$('chips').querySelectorAll('.chip')].map((c) => byKey.get(c.dataset.key)).filter(Boolean);
+      saveWork();
+      refresh();
+    },
+  });
+  $('copy-btn').addEventListener('click', copy);
+  $('clear-btn').addEventListener('click', clearAll);
+  $('reorder-btn').addEventListener('click', () => setReorder(!reorder));
+  onChange(render);
+  render();
+}
