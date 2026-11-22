@@ -118,6 +118,63 @@ export function addToWork(items) {
   return added;
 }
 
+// --- ランダム ---
+// グループごとの設定に従って、カードを選び直す。
+//   固定（既定）：今選んでいるカードを残す（無ければ何も入れない）
+//   ランダム   ：そのグループの中から count 枚を選び直す
+//   対象外     ：そのグループのカードは選ばない（選択中でも外す）
+function pickRandom(list, n) {
+  const a = [...list];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, Math.min(n, a.length));
+}
+
+function randomize() {
+  const before = { tags: [...work.tags], selected: [...work.selected] };
+  const prev = new Set(work.selected);
+  const keep = new Set();
+  const picked = [];
+  let randomGroups = 0;
+  for (const cat of state.categories) {
+    for (const g of cat.groups) {
+      const mode = g.random?.mode || 'fixed';
+      if (mode === 'fixed') g.tags.forEach((t) => prev.has(t.id) && keep.add(t.id));
+      else if (mode === 'random') {
+        randomGroups++;
+        picked.push(...pickRandom(g.tags, g.random.count).map((t) => t.id));
+      }
+    }
+  }
+  if (randomGroups === 0) {
+    return toast(tr('ランダムにするグループがありません。管理タブでグループを編集して「ランダムで選ぶ」にしてください', 'No groups are set to random. Edit a group in the Manage tab and choose "Pick at random"'), { ms: 5000 });
+  }
+  // 今の作業欄のうち、カードを持たないタグと、残すカードのタグはそのまま（×で消したタグも戻さない）
+  const keysOf = (ids) => new Set(ids.flatMap((id) => (findTag(id) ? splitTags(findTag(id).content).map((t) => t.key) : [])));
+  const cardKeys = keysOf(work.selected);
+  const keptKeys = keysOf([...keep]);
+  const tags = work.tags.filter((t) => !cardKeys.has(t.key) || keptKeys.has(t.key));
+  for (const id of picked) {
+    for (const t of splitTags(findTag(id).content)) if (!tags.some((x) => x.key === t.key)) tags.push(t);
+  }
+  work = { tags, selected: [...work.selected.filter((id) => keep.has(id)), ...picked] };
+  sortWork();
+  saveWork();
+  refresh();
+  toast(tr(`ランダムで ${picked.length} 枚選びました`, `Picked ${picked.length} cards at random`), {
+    label: tr('元に戻す', 'Undo'),
+    ms: 5000,
+    onAction: () => {
+      work = before;
+      pruneSelected();
+      saveWork();
+      refresh();
+    },
+  });
+}
+
 function removeChip(key) {
   work.tags = work.tags.filter((t) => t.key !== key);
   pruneSelected();
@@ -358,6 +415,8 @@ export function init() {
   });
   $('copy-btn').addEventListener('click', copy);
   $('copy-mini').addEventListener('click', copy);
+  $('random-btn').addEventListener('click', randomize);
+  $('random-mini').addEventListener('click', randomize);
   $('sel-toggle').addEventListener('click', toggleSel);
   applySelCollapsed();
   $('clear-btn').addEventListener('click', clearAll);

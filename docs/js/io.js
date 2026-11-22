@@ -86,7 +86,7 @@ export function mergeAppend(current, imported) {
     for (const g of inc.groups) {
       let group = cat.groups.find((x) => x.name === g.name);
       if (!group) {
-        group = { id: fresh(g.id), name: g.name, tags: [] };
+        group = { id: fresh(g.id), name: g.name, tags: [], ...(g.random ? { random: g.random } : {}) };
         cat.groups.push(group);
       }
       const seen = new Set(group.tags.map(dupKey));

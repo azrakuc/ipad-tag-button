@@ -35,6 +35,20 @@ function normalizeTag(raw, seenIds, counts) {
   return { id, name: raw.name, content: raw.content, thumbnail };
 }
 
+// グループのランダム設定。既定の「固定」（今の選択を残す）のときは持たない。
+//   { mode: 'random', count: 1〜RANDOM_MAX } … ランダムで count 枚選ぶ
+//   { mode: 'off' }                         … 対象外（選ばない。選択中のカードも外す）
+export const RANDOM_MAX = 20;
+export function normalizeRandom(r) {
+  if (!r || typeof r !== 'object') return undefined;
+  if (r.mode === 'off') return { mode: 'off' };
+  if (r.mode === 'random') {
+    const n = Math.floor(Number(r.count));
+    return { mode: 'random', count: Number.isFinite(n) ? Math.min(RANDOM_MAX, Math.max(1, n)) : 1 };
+  }
+  return undefined;
+}
+
 // 不正な項目は捨てて件数を数える。いちばん外側が配列でなければ例外を投げる。
 // 形式：[{ id, categoryName, groups: [{ id, name, tags: [...] }] }]
 // 元の拡張機能の形式（groups がなく tags だけ）は、1 つのグループ「タグ」にまとめて読み込む。
@@ -76,7 +90,8 @@ export function normalizeCategories(data) {
         if (tag) tags.push(tag);
         else skippedTags++;
       }
-      groups.push({ id: groupId, name: g.name, tags });
+      const random = normalizeRandom(g.random);
+      groups.push(random ? { id: groupId, name: g.name, tags, random } : { id: groupId, name: g.name, tags });
     }
     categories.push({ id: catId, categoryName: c.categoryName, groups });
   }
