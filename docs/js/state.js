@@ -1,5 +1,6 @@
 // 画面どうしで共有するデータと、変更の通知。
 import * as Storage from './storage.js';
+import { tr } from './i18n.js';
 
 export const state = {
   categories: [],
@@ -41,7 +42,7 @@ export async function commit() {
     emit();
     return true;
   } catch (e) {
-    alert('保存に失敗しました。直前の変更は反映されていません。\n' + e.message);
+    alert(tr('保存に失敗しました。直前の変更は反映されていません。\n', 'Saving failed. Your last change was not applied.\n') + e.message);
     state.categories = await Storage.loadCategories();
     emit();
     return false;

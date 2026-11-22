@@ -1,5 +1,6 @@
 // 画像画面：画像に入っているプロンプトを取り出して表示する。画像も結果も保存しない。
-import { readPrompt, NO_PROMPT_MESSAGE } from './metadata.js';
+import { readPrompt, noPromptMessage } from './metadata.js';
+import { tr, onLang } from './i18n.js';
 import { splitByMode } from './tags.js';
 import { addToWork } from './builder.js';
 import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
@@ -7,6 +8,24 @@ import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 let current = null;   // { file, result }
 let previewUrl = null;
 let picked = new Set();
+// メッセージ欄の中身（言語を切り替えても書き直せるように、文字ではなく関数で持つ）
+const INITIAL_MSG = () => tr(
+  '画像を選ぶと、入っているプロンプトを取り出します。画像は iPad の中で読むだけで、どこにも送信・保存しません。',
+  'Choose an image to extract the prompt stored in it. The image is only read on this device and is never sent or saved.',
+);
+let msgFn = INITIAL_MSG;
+function setMsg(fn) {
+  msgFn = fn;
+  $('i-msg').textContent = fn();
+}
+
+// 設定の項目名（metadata.js は言語に依存しない名前を返す）
+const LABELS = {
+  Sampler: () => tr('サンプラー', 'Sampler'),
+  Size: () => tr('サイズ', 'Size'),
+  Model: () => tr('モデル', 'Model'),
+};
+
 let token = 0;        // 読み込みの途中で別の画像が選ばれたときに、古い結果を捨てるため
 
 function showPreview(file) {
@@ -35,7 +54,7 @@ function renderPositive(text) {
   picked = new Set();
   const tags = splitByMode(text, getSplitMode());
   if (tags.length === 0) {
-    box.append(el('p', { className: 'empty small', textContent: 'ポジティブはありません。' }));
+    box.append(el('p', { className: 'empty small', textContent: tr('ポジティブはありません。', 'No positive prompt.') }));
     return;
   }
   for (const t of tags) {
@@ -57,15 +76,15 @@ function renderResult(result) {
   $('i-msg').hidden = found;
   renderRaw(result.raw);
   if (!found) {
-    $('i-msg').textContent = NO_PROMPT_MESSAGE;
+    setMsg(noPromptMessage);
     return;
   }
-  $('i-source').textContent = `読み取り元：${result.source}`;
+  $('i-source').textContent = tr(`読み取り元：${result.source}`, `Source: ${result.source}`);
   renderPositive(result.positive);
-  $('i-neg').textContent = result.negative || '（なし）';
+  $('i-neg').textContent = result.negative || tr('（なし）', '(none)');
   const dl = $('i-settings');
   dl.replaceChildren();
-  for (const [k, v] of result.settings) dl.append(el('dt', { textContent: k }), el('dd', { textContent: v }));
+  for (const [k, v] of result.settings) dl.append(el('dt', { textContent: LABELS[k] ? LABELS[k]() : k }), el('dd', { textContent: v }));
   dl.hidden = result.settings.length === 0;
 }
 
@@ -76,7 +95,7 @@ async function load(file) {
   $('i-result').hidden = true;
   $('i-raw').hidden = true;
   $('i-msg').hidden = false;
-  $('i-msg').textContent = '読み取り中…';
+  setMsg(() => tr('読み取り中…', 'Reading…'));
   try {
     const result = await readPrompt(file);
     if (mine !== token) return;
@@ -84,17 +103,17 @@ async function load(file) {
     renderResult(result);
   } catch (e) {
     if (mine !== token) return;
-    $('i-msg').textContent = e.message;
+    setMsg(() => e.message);
   }
 }
 
 async function copy(text) {
-  if (!text) return toast('コピーする内容がありません');
+  if (!text) return toast(tr('コピーする内容がありません', 'Nothing to copy'));
   try {
     await navigator.clipboard.writeText(text);
-    toast('コピーしました');
+    toast(tr('コピーしました', 'Copied'));
   } catch {
-    toast('自動でコピーできませんでした', { ms: 3000 });
+    toast(tr('自動でコピーできませんでした', "Couldn't copy automatically"), { ms: 3000 });
   }
 }
 
@@ -106,6 +125,11 @@ function pickedItems() {
 
 // onExtract(text, file)：「管理で切り出す」が押されたときに呼ばれる。
 export function init({ onExtract }) {
+  setMsg(INITIAL_MSG);
+  onLang(() => {
+    $('i-msg').textContent = msgFn();
+    if (current) renderResult(current.result);
+  });
   onSplitMode(() => current && renderPositive(current.result.positive));
   $('i-pick').addEventListener('click', () => $('i-file').click());
   $('i-file').addEventListener('change', () => {
@@ -128,7 +152,7 @@ export function init({ onExtract }) {
     drop.classList.remove('over');
     const file = [...(e.dataTransfer?.files || [])][0];
     if (file) load(file);
-    else toast('画像のファイルを落としてください');
+    else toast(tr('画像のファイルを落としてください', 'Please drop an image file'));
   });
 
   $('i-copy-pos').addEventListener('click', () => current && copy(current.result.positive));
@@ -136,12 +160,12 @@ export function init({ onExtract }) {
   $('i-add').addEventListener('click', () => {
     if (!current) return;
     const items = pickedItems();
-    if (items.length === 0) return toast('追加するタグがありません');
+    if (items.length === 0) return toast(tr('追加するタグがありません', 'No tags to add'));
     const n = addToWork(items);
-    toast(n ? `作業欄に ${n} 件追加しました` : 'すべて作業欄にあります');
+    toast(n ? tr(`作業欄に ${n} 件追加しました`, `Added ${n} tags to the work area`) : tr('すべて作業欄にあります', 'All of them are already in the work area'));
   });
   $('i-extract').addEventListener('click', () => {
-    if (!current?.result.positive) return toast('切り出すポジティブがありません');
+    if (!current?.result.positive) return toast(tr('切り出すポジティブがありません', 'There is no positive prompt to extract'));
     onExtract(current.result.positive, current.file);
   });
 }

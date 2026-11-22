@@ -2,6 +2,7 @@
 import { state, onChange, findTag, catTags } from './state.js';
 import { splitTags, joinTags } from './tags.js';
 import { $, el, toast } from './ui.js';
+import { tr, onLang } from './i18n.js';
 
 const WORK_KEY = 'itb:work';
 const LAST_KEY = 'itb:lastCategory';
@@ -134,7 +135,7 @@ function cardFor(tag) {
     fired = false;
     timer = setTimeout(() => {
       fired = true;
-      toast(`${tag.name}： ${tag.content}`, { ms: 4000 });
+      toast(`${tag.name}${tr('： ', ': ')}${tag.content}`, { ms: 4000 });
     }, LONG_PRESS_MS);
   });
   for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) {
@@ -155,12 +156,12 @@ function renderCards() {
   const box = $('cards');
   box.replaceChildren();
   if (state.categories.length === 0) {
-    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。上の「管理」タブでカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。使い方は「説明」タブにあります。' }));
+    box.append(el('p', { className: 'empty', textContent: tr('カテゴリーがありません。上の「管理」タブでカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。使い方は「説明」タブにあります。', 'No categories yet. Add categories, groups and tags in the "Manage" tab, or import a JSON file. See the "Help" tab for how to use the app.') }));
     return;
   }
   const cat = state.categories.find((c) => c.id === currentCat);
   if (!cat || catTags(cat).length === 0) {
-    box.append(el('p', { className: 'empty', textContent: 'このカテゴリーにはタグがありません。' }));
+    box.append(el('p', { className: 'empty', textContent: tr('このカテゴリーにはタグがありません。', 'This category has no tags.') }));
     return;
   }
   for (const group of cat.groups) {
@@ -168,7 +169,7 @@ function renderCards() {
     const open = !collapsed.has(group.id);
     const head = el('button', { type: 'button', className: 'group-head' }, [
       el('span', { className: 'group-arrow', textContent: open ? '▼' : '▶' }),
-      el('span', { textContent: `${group.name}（${group.tags.length}）` }),
+      el('span', { textContent: tr(`${group.name}（${group.tags.length}）`, `${group.name} (${group.tags.length})`) }),
     ]);
     head.setAttribute('aria-expanded', String(open));
     const grid = el('div', { className: 'group-cards' });
@@ -204,14 +205,14 @@ function renderChips() {
   const box = $('chips');
   box.replaceChildren();
   if (work.tags.length === 0) {
-    box.append(el('p', { className: 'empty small', textContent: 'カードをタップするとここに追加されます。' }));
+    box.append(el('p', { className: 'empty small', textContent: tr('カードをタップするとここに追加されます。', 'Tap a card to add its tags here.') }));
     return;
   }
   for (const t of work.tags) {
     const chip = el('span', { className: 'chip' }, [el('span', { textContent: t.text })]);
     chip.dataset.key = t.key;
     const x = el('button', { type: 'button', className: 'chip-x', textContent: '×' });
-    x.setAttribute('aria-label', `${t.text} を削除`);
+    x.setAttribute('aria-label', tr(`${t.text} を削除`, `Remove ${t.text}`));
     x.addEventListener('click', () => removeChip(t.key));
     chip.append(x);
     box.append(chip);
@@ -237,15 +238,15 @@ function render() {
 async function copy() {
   const out = $('output');
   const text = out.value;
-  if (!text) return toast('コピーするタグがありません');
+  if (!text) return toast(tr('コピーするタグがありません', 'There are no tags to copy'));
   try {
     await navigator.clipboard.writeText(text);
-    toast('コピーしました');
+    toast(tr('コピーしました', 'Copied'));
   } catch {
     out.focus();
     out.select();
     out.setSelectionRange(0, text.length);
-    toast('自動でコピーできませんでした。選択された文字を手動でコピーしてください', { ms: 4000 });
+    toast(tr('自動でコピーできませんでした。選択された文字を手動でコピーしてください', "Couldn't copy automatically. Please copy the selected text manually"), { ms: 4000 });
   }
 }
 
@@ -255,8 +256,8 @@ function clearAll() {
   work = { tags: [], selected: [] };
   saveWork();
   refresh();
-  toast('クリアしました', {
-    label: '元に戻す',
+  toast(tr('クリアしました', 'Cleared'), {
+    label: tr('元に戻す', 'Undo'),
     ms: 6000,
     onAction: () => {
       work = backup;
@@ -272,7 +273,7 @@ function setReorder(on) {
   chipSorter.option('disabled', !on);
   $('chips').classList.toggle('reorder', on);
   $('reorder-btn').setAttribute('aria-pressed', String(on));
-  $('reorder-btn').textContent = on ? '並べ替え終了' : '並べ替え';
+  $('reorder-btn').textContent = on ? tr('並べ替え終了', 'Done reordering') : tr('並べ替え', 'Reorder');
 }
 
 export function init() {
@@ -292,5 +293,9 @@ export function init() {
   $('clear-btn').addEventListener('click', clearAll);
   $('reorder-btn').addEventListener('click', () => setReorder(!reorder));
   onChange(render);
+  onLang(() => {
+    render();
+    setReorder(reorder);
+  });
   render();
 }

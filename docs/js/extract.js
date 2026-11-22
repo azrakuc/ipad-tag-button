@@ -3,7 +3,8 @@ import { state, commit } from './state.js';
 import { newId, LIMITS } from './storage.js';
 import { splitTags, splitSentences, splitByMode, joinerFor } from './tags.js';
 import { resizeImage } from './image.js';
-import { readPrompt, NO_PROMPT_MESSAGE } from './metadata.js';
+import { readPrompt, noPromptMessage } from './metadata.js';
+import { tr, onLang } from './i18n.js';
 import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
 const SOURCE_KEY = 'itb:extractSource';
@@ -46,7 +47,7 @@ function renderChips() {
   box.replaceChildren();
   const tags = splitByMode($('x-source').value, getSplitMode());
   if (tags.length === 0) {
-    box.append(el('p', { className: 'empty small', textContent: '①にプロンプトを入れると、ここにタグが並びます。' }));
+    box.append(el('p', { className: 'empty small', textContent: tr('①にプロンプトを入れると、ここにタグが並びます。', 'Put a prompt in ① and its tags will appear here.') }));
     return;
   }
   for (const t of tags) {
@@ -88,8 +89,8 @@ export function refresh() {
   registered = null;
   const { cat, group } = getTarget();
   $('x-target').textContent = group
-    ? `登録先：${cat.categoryName} > ${group.name}（上のリストで選択中）`
-    : '上のリストでグループを選んでください。';
+    ? tr(`登録先：${cat.categoryName} > ${group.name}（上のリストで選択中）`, `Register to: ${cat.categoryName} > ${group.name} (selected in the lists above)`)
+    : tr('上のリストでグループを選んでください。', 'Select a group in the lists above.');
   $('x-register').disabled = !group;
   $('x-append').disabled = !group;
   updateChipStates();
@@ -126,7 +127,7 @@ async function onImageChosen() {
   if (!file) return;
   try {
     const result = await readPrompt(file);
-    if (!result.positive) return toast(NO_PROMPT_MESSAGE, { ms: 6000 });
+    if (!result.positive) return toast(noPromptMessage(), { ms: 6000 });
     receive(result.positive, file);
   } catch (e) {
     toast(e.message, { ms: 4000 });
@@ -137,7 +138,7 @@ function clearSource() {
   const backup = { text: $('x-source').value, file: sourceFile };
   if (!backup.text) return;
   setSource('', null, 'replace');
-  toast('クリアしました', { label: '元に戻す', ms: 6000, onAction: () => setSource(backup.text, backup.file, 'replace') });
+  toast(tr('クリアしました', 'Cleared'), { label: tr('元に戻す', 'Undo'), ms: 6000, onAction: () => setSource(backup.text, backup.file, 'replace') });
 }
 
 // --- ③のサムネイル ---
@@ -167,21 +168,21 @@ function clearForm() {
 
 async function register() {
   const { group } = getTarget();
-  if (!group) return toast('上のリストでグループを選んでください');
+  if (!group) return toast(tr('上のリストでグループを選んでください', 'Select a group in the lists above'));
   const name = $('x-name').value.trim();
   const content = $('x-content').value.trim();
-  if (!name || !content) return toast('名前と内容を入力してください');
-  if (name.length > LIMITS.name || content.length > LIMITS.content) return toast('名前か内容が長すぎます');
+  if (!name || !content) return toast(tr('名前と内容を入力してください', 'Enter a name and content'));
+  if (name.length > LIMITS.name || content.length > LIMITS.content) return toast(tr('名前か内容が長すぎます', 'The name or content is too long'));
   group.tags.push({ id: newId(), name, content, thumbnail: thumb });
   clearForm();
-  if (await commit()) toast(`「${name}」を登録しました`);
+  if (await commit()) toast(tr(`「${name}」を登録しました`, `Registered "${name}"`));
 }
 
 // --- 既存のタグに追記 ---
 function openAppend() {
   const { group } = getTarget();
-  if (!group) return toast('上のリストでグループを選んでください');
-  if (splitByMode($('x-content').value, getSplitMode()).length === 0) return toast('③の内容が空です。②のチップをタップしてください');
+  if (!group) return toast(tr('上のリストでグループを選んでください', 'Select a group in the lists above'));
+  if (splitByMode($('x-content').value, getSplitMode()).length === 0) return toast(tr('③の内容が空です。②のチップをタップしてください', 'The content in ③ is empty. Tap chips in ②'));
   const list = $('a-list');
   list.replaceChildren();
   for (const tag of group.tags) {
@@ -192,7 +193,7 @@ function openAppend() {
     btn.addEventListener('click', () => appendTo(tag));
     list.append(el('li', { className: 'm-item' }, [btn]));
   }
-  if (group.tags.length === 0) list.append(el('li', { className: 'empty small', textContent: 'このグループにタグがありません。' }));
+  if (group.tags.length === 0) list.append(el('li', { className: 'empty small', textContent: tr('このグループにタグがありません。', 'This group has no tags.') }));
   $('dlg-append').showModal();
 }
 
@@ -201,13 +202,13 @@ async function appendTo(tag) {
   const have = new Set([...splitTags(tag.content), ...splitSentences(tag.content)].map((t) => t.key));
   const added = splitByMode($('x-content').value, mode).filter((t) => !have.has(t.key));
   $('dlg-append').close();
-  if (added.length === 0) return toast('追記するタグはありません（すべて含まれています）');
+  if (added.length === 0) return toast(tr('追記するタグはありません（すべて含まれています）', 'Nothing to append (all tags are already included)'));
   const next = `${tag.content.trim().replace(/,\s*$/, '')}${joinerFor(mode)}${added.map((t) => t.text).join(joinerFor(mode))}`;
-  if (next.length > LIMITS.content) return toast(`内容が ${LIMITS.content} 文字を超えるため追記できません`);
+  if (next.length > LIMITS.content) return toast(tr(`内容が ${LIMITS.content} 文字を超えるため追記できません`, `Can't append: the content would exceed ${LIMITS.content} characters`));
   tag.content = next;
   $('x-content').value = '';
   updateChipStates();
-  if (await commit()) toast(`「${tag.name}」に ${added.length} 件を追記しました`);
+  if (await commit()) toast(tr(`「${tag.name}」に ${added.length} 件を追記しました`, `Appended ${added.length} tags to "${tag.name}"`));
 }
 
 // hooks.getTarget：管理画面で選択中の { cat, group } を返す。
@@ -252,6 +253,10 @@ export function init(hooks) {
   $('dlg-source').addEventListener('close', () => { incoming = null; });
 
   onSplitMode(renderChips);
+  onLang(() => {
+    renderChips();
+    refresh();
+  });
   renderChips();
   refresh();
 }

@@ -5,6 +5,7 @@ import { SEPARATORS } from './tags.js';
 import { resizeImage } from './image.js';
 import * as IO from './io.js';
 import * as Extract from './extract.js';
+import { tr, onLang, locale } from './i18n.js';
 import { $, el, toast } from './ui.js';
 
 let selCatId = null;
@@ -21,44 +22,44 @@ function renderCats() {
   const list = $('m-cats');
   list.replaceChildren();
   for (const cat of state.categories) {
-    const name = el('button', { type: 'button', className: 'm-main', textContent: `${cat.categoryName}（${catTags(cat).length}）` });
+    const name = el('button', { type: 'button', className: 'm-main', textContent: tr(`${cat.categoryName}（${catTags(cat).length}）`, `${cat.categoryName} (${catTags(cat).length})`) });
     name.addEventListener('click', () => {
       selCatId = cat.id;
       selGroupId = null;
       render();
     });
-    const edit = el('button', { type: 'button', className: 'btn', textContent: '編集' });
+    const edit = el('button', { type: 'button', className: 'btn', textContent: tr('編集', 'Edit') });
     edit.addEventListener('click', () => openCatDialog(cat.id));
     list.append(el('li', { className: 'm-item' + (cat.id === selCatId ? ' active' : '') }, [handle(), name, edit]));
   }
-  if (state.categories.length === 0) list.append(emptyItem('カテゴリーがありません。'));
+  if (state.categories.length === 0) list.append(emptyItem(tr('カテゴリーがありません。', 'No categories.')));
 }
 
 function renderGroups() {
   const list = $('m-groups');
   list.replaceChildren();
   const cat = selCat();
-  $('m-groups-title').textContent = cat ? `「${cat.categoryName}」のグループ` : 'グループ';
-  if (!cat) return list.append(emptyItem('カテゴリーを選んでください。'));
+  $('m-groups-title').textContent = cat ? tr(`「${cat.categoryName}」のグループ`, `Groups in "${cat.categoryName}"`) : tr('グループ', 'Groups');
+  if (!cat) return list.append(emptyItem(tr('カテゴリーを選んでください。', 'Select a category.')));
   for (const group of cat.groups) {
-    const name = el('button', { type: 'button', className: 'm-main', textContent: `${group.name}（${group.tags.length}）` });
+    const name = el('button', { type: 'button', className: 'm-main', textContent: tr(`${group.name}（${group.tags.length}）`, `${group.name} (${group.tags.length})`) });
     name.addEventListener('click', () => {
       selGroupId = group.id;
       render();
     });
-    const edit = el('button', { type: 'button', className: 'btn', textContent: '編集' });
+    const edit = el('button', { type: 'button', className: 'btn', textContent: tr('編集', 'Edit') });
     edit.addEventListener('click', () => openGroupDialog(group.id));
     list.append(el('li', { className: 'm-item' + (group.id === selGroupId ? ' active' : '') }, [handle(), name, edit]));
   }
-  if (cat.groups.length === 0) list.append(emptyItem('グループがありません。'));
+  if (cat.groups.length === 0) list.append(emptyItem(tr('グループがありません。', 'No groups.')));
 }
 
 function renderTags() {
   const list = $('m-tags');
   list.replaceChildren();
   const group = selGroup();
-  $('m-tags-title').textContent = group ? `「${group.name}」のタグ` : 'タグ';
-  if (!group) return list.append(emptyItem('グループを選んでください。'));
+  $('m-tags-title').textContent = group ? tr(`「${group.name}」のタグ`, `Tags in "${group.name}"`) : tr('タグ', 'Tags');
+  if (!group) return list.append(emptyItem(tr('グループを選んでください。', 'Select a group.')));
   for (const tag of group.tags) {
     const thumb = el('div', { className: 'm-thumb' });
     if (tag.thumbnail) thumb.append(el('img', { src: tag.thumbnail, alt: '', draggable: false }));
@@ -69,16 +70,16 @@ function renderTags() {
     text.addEventListener('click', () => openTagDialog(tag.id));
     list.append(el('li', { className: 'm-item' }, [handle(), thumb, text]));
   }
-  if (group.tags.length === 0) list.append(emptyItem('タグがありません。'));
+  if (group.tags.length === 0) list.append(emptyItem(tr('タグがありません。', 'No tags.')));
 }
 
 async function renderSettings() {
   $('s-separator').value = Object.keys(SEPARATORS).find((k) => SEPARATORS[k] === state.settings.separator) || 'comma-space';
   const last = state.meta.lastExportedAt;
-  $('d-last').textContent = last ? `最終エクスポート：${new Date(last).toLocaleString('ja-JP')}` : 'まだエクスポートしていません。定期的にバックアップしてください。';
+  $('d-last').textContent = last ? tr('最終エクスポート：', 'Last export: ') + new Date(last).toLocaleString(locale()) : tr('まだエクスポートしていません。定期的にバックアップしてください。', "You haven't exported yet. Please back up regularly.");
   if (navigator.storage?.estimate) {
     const { usage } = await navigator.storage.estimate();
-    $('s-storage').textContent = `ストレージ使用量：${((usage || 0) / 1024 / 1024).toFixed(2)} MB`;
+    $('s-storage').textContent = tr('ストレージ使用量：', 'Storage used: ') + `${((usage || 0) / 1024 / 1024).toFixed(2)} MB`;
   }
 }
 
@@ -98,7 +99,7 @@ let editingCatId = null;
 function openCatDialog(id) {
   editingCatId = id;
   const cat = state.categories.find((c) => c.id === id);
-  $('c-title').textContent = cat ? 'カテゴリーを編集' : 'カテゴリーを追加';
+  $('c-title').textContent = cat ? tr('カテゴリーを編集', 'Edit category') : tr('カテゴリーを追加', 'Add category');
   $('c-name').value = cat ? cat.categoryName : '';
   $('c-del').hidden = !cat;
   $('dlg-cat').showModal();
@@ -106,7 +107,7 @@ function openCatDialog(id) {
 
 async function saveCat() {
   const name = $('c-name').value.trim();
-  if (!name) return toast('カテゴリー名を入力してください');
+  if (!name) return toast(tr('カテゴリー名を入力してください', 'Enter a category name'));
   const cat = state.categories.find((c) => c.id === editingCatId);
   if (cat) {
     cat.categoryName = name;
@@ -123,7 +124,7 @@ async function saveCat() {
 async function deleteCat() {
   const cat = state.categories.find((c) => c.id === editingCatId);
   if (!cat) return;
-  if (!confirm(`カテゴリー「${cat.categoryName}」を削除しますか？\n中のグループ（${cat.groups.length} 件）とタグ（${catTags(cat).length} 件）もすべて削除されます。`)) return;
+  if (!confirm(tr(`カテゴリー「${cat.categoryName}」を削除しますか？\n中のグループ（${cat.groups.length} 件）とタグ（${catTags(cat).length} 件）もすべて削除されます。`, `Delete the category "${cat.categoryName}"?\nIts groups (${cat.groups.length}) and tags (${catTags(cat).length}) will also be deleted.`))) return;
   state.categories = state.categories.filter((c) => c.id !== cat.id);
   $('dlg-cat').close();
   await commit();
@@ -133,10 +134,10 @@ async function deleteCat() {
 let editingGroupId = null;
 
 function openGroupDialog(id) {
-  if (!selCat()) return toast('先にカテゴリーを追加してください');
+  if (!selCat()) return toast(tr('先にカテゴリーを追加してください', 'Add a category first'));
   editingGroupId = id;
   const group = selCat().groups.find((g) => g.id === id);
-  $('g-title').textContent = group ? 'グループを編集' : 'グループを追加';
+  $('g-title').textContent = group ? tr('グループを編集', 'Edit group') : tr('グループを追加', 'Add group');
   $('g-name').value = group ? group.name : '';
   $('g-del').hidden = !group;
   $('dlg-group').showModal();
@@ -144,7 +145,7 @@ function openGroupDialog(id) {
 
 async function saveGroup() {
   const name = $('g-name').value.trim();
-  if (!name) return toast('グループ名を入力してください');
+  if (!name) return toast(tr('グループ名を入力してください', 'Enter a group name'));
   const cat = selCat();
   const group = cat.groups.find((g) => g.id === editingGroupId);
   if (group) {
@@ -162,7 +163,7 @@ async function deleteGroup() {
   const cat = selCat();
   const group = cat?.groups.find((g) => g.id === editingGroupId);
   if (!group) return;
-  if (!confirm(`グループ「${group.name}」を削除しますか？\n中のタグ（${group.tags.length} 件）もすべて削除されます。`)) return;
+  if (!confirm(tr(`グループ「${group.name}」を削除しますか？\n中のタグ（${group.tags.length} 件）もすべて削除されます。`, `Delete the group "${group.name}"?\nIts tags (${group.tags.length}) will also be deleted.`))) return;
   cat.groups = cat.groups.filter((g) => g !== group);
   $('dlg-group').close();
   await commit();
@@ -189,13 +190,13 @@ function fillGroupSelect(catId, groupId) {
 }
 
 function openTagDialog(id) {
-  if (state.categories.length === 0) return toast('先にカテゴリーを追加してください');
+  if (state.categories.length === 0) return toast(tr('先にカテゴリーを追加してください', 'Add a category first'));
   const found = id ? locateTag(id) : null;
   const cat = found ? found.cat : selCat();
   const group = found ? found.group : selGroup();
-  if (!found && !group) return toast('先にグループを追加してください');
+  if (!found && !group) return toast(tr('先にグループを追加してください', 'Add a group first'));
   editingTagId = id;
-  $('t-title').textContent = found ? 'タグを編集' : 'タグを追加';
+  $('t-title').textContent = found ? tr('タグを編集', 'Edit tag') : tr('タグを追加', 'Add tag');
   $('t-name').value = found ? found.tag.name : '';
   $('t-content').value = found ? found.tag.content : '';
   $('t-cat').replaceChildren(...state.categories.map((c) => el('option', { value: c.id, textContent: c.categoryName })));
@@ -212,10 +213,10 @@ function openTagDialog(id) {
 async function saveTag() {
   const name = $('t-name').value.trim();
   const content = $('t-content').value.trim();
-  if (!name || !content) return toast('名前と内容を入力してください');
+  if (!name || !content) return toast(tr('名前と内容を入力してください', 'Enter a name and content'));
   const destCat = state.categories.find((c) => c.id === $('t-cat').value);
   const dest = destCat?.groups.find((g) => g.id === $('t-group').value);
-  if (!dest) return toast('グループを選んでください（先にグループを追加してください）');
+  if (!dest) return toast(tr('グループを選んでください（先にグループを追加してください）', 'Select a group (add a group first)'));
   if (thumbTask) {
     try { await thumbTask; } catch { /* 失敗は選択時に表示済み */ }
   }
@@ -239,16 +240,16 @@ async function duplicateTag() {
   const found = locateTag(editingTagId);
   if (!found) return;
   const i = found.group.tags.indexOf(found.tag);
-  found.group.tags.splice(i + 1, 0, { ...found.tag, id: newId(), name: `${found.tag.name}(コピー)`.slice(0, 100) });
+  found.group.tags.splice(i + 1, 0, { ...found.tag, id: newId(), name: `${found.tag.name}${tr('(コピー)', ' (copy)')}`.slice(0, 100) });
   $('dlg-tag').close();
   await commit();
-  toast('複製しました');
+  toast(tr('複製しました', 'Duplicated'));
 }
 
 async function deleteTag() {
   const found = locateTag(editingTagId);
   if (!found) return;
-  if (!confirm(`タグ「${found.tag.name}」を削除しますか？`)) return;
+  if (!confirm(tr(`タグ「${found.tag.name}」を削除しますか？`, `Delete the tag "${found.tag.name}"?`))) return;
   found.group.tags = found.group.tags.filter((t) => t !== found.tag);
   $('dlg-tag').close();
   await commit();
@@ -265,17 +266,17 @@ async function onFileChosen() {
     pending = await IO.parseFile(file);
   } catch (e) {
     pending = null;
-    alert('読み込めませんでした。\n' + e.message + '\n\n今のデータは変更されていません。');
+    alert(tr('読み込めませんでした。\n', 'Could not import.\n') + e.message + tr('\n\n今のデータは変更されていません。', '\n\nYour current data was not changed.'));
     return;
   }
   const lines = [
-    `カテゴリー：${pending.categories.length} 件`,
-    `グループ：${IO.countGroups(pending.categories)} 件`,
-    `タグ：${IO.countTags(pending.categories)} 件`,
+    tr(`カテゴリー：${pending.categories.length} 件`, `Categories: ${pending.categories.length}`),
+    tr(`グループ：${IO.countGroups(pending.categories)} 件`, `Groups: ${IO.countGroups(pending.categories)}`),
+    tr(`タグ：${IO.countTags(pending.categories)} 件`, `Tags: ${IO.countTags(pending.categories)}`),
   ];
   const { skippedCategories: sc, skippedGroups: sg, skippedTags: st } = pending;
   if (sc || sg || st) {
-    lines.push(`読み飛ばし：カテゴリー ${sc} 件、グループ ${sg} 件、タグ ${st} 件（不正な内容、または大きすぎる項目）`);
+    lines.push(tr(`読み飛ばし：カテゴリー ${sc} 件、グループ ${sg} 件、タグ ${st} 件（不正な内容、または大きすぎる項目）`, `Skipped: ${sc} categories, ${sg} groups, ${st} tags (invalid or too large)`));
   }
   $('i-summary').textContent = lines.join('\n');
   $('dlg-import').showModal();
@@ -291,11 +292,11 @@ async function applyImport(mode) {
     state.categories = data.categories;
     selCatId = null;
     selGroupId = null;
-    if (await commit()) toast('全置換しました');
+    if (await commit()) toast(tr('全置換しました', 'Replaced all data'));
   } else {
     const { categories, addedTags, duplicateTags } = IO.mergeAppend(state.categories, data.categories);
     state.categories = categories;
-    if (await commit()) toast(`追加しました（タグ ${addedTags} 件、重複 ${duplicateTags} 件は読み込まず）`, { ms: 4000 });
+    if (await commit()) toast(tr(`追加しました（タグ ${addedTags} 件、重複 ${duplicateTags} 件は読み込まず）`, `Added ${addedTags} tags (${duplicateTags} duplicates were skipped)`), { ms: 4000 });
   }
 }
 
@@ -356,10 +357,10 @@ export function init() {
 
   $('s-separator').addEventListener('change', () => updateSettings({ separator: SEPARATORS[$('s-separator').value] }));
 
-  $('d-export').addEventListener('click', () => IO.download().then(() => toast('エクスポートしました')));
+  $('d-export').addEventListener('click', () => IO.download().then(() => toast(tr('エクスポートしました', 'Exported'))));
   if (IO.canShare()) {
     $('d-share').hidden = false;
-    $('d-share').addEventListener('click', () => IO.share().catch((e) => toast('共有できませんでした：' + e.message)));
+    $('d-share').addEventListener('click', () => IO.share().catch((e) => toast(tr('共有できませんでした：', 'Could not share: ') + e.message)));
   }
   $('d-import').addEventListener('click', () => $('d-file').click());
   $('d-file').addEventListener('change', onFileChosen);
@@ -369,5 +370,6 @@ export function init() {
 
   Extract.init({ getTarget: () => ({ cat: selCat(), group: selGroup() }) });
   onChange(render);
+  onLang(render);
   render();
 }
