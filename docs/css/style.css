@@ -285,12 +285,12 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .btn[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); }
 
 /* --- 管理画面 --- */
-#view-manager { flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
-.m-grid { display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 12px; }
+#view-manager { flex: 1; overflow-x: hidden; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
+.m-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
 @media (orientation: landscape) {
   .m-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
-.card-box { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
+.card-box { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px; margin-bottom: 12px; }
 .m-grid .card-box { margin-bottom: 0; }
 .box-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .box-head h2 { font-size: 17px; margin: 0; }
