@@ -254,6 +254,7 @@
 - `manifest.webmanifest`（`display: standalone`）と `apple-touch-icon`（元の `icon128.png` をもとに 180px を作る）を用意する。
 - Service Worker：アプリのファイルを先にキャッシュし、キャッシュを優先して返す。新しい版が届いたら「更新があります」と表示し、タップで再読み込みする。
 - 画面の安全領域に合わせる（`viewport-fit=cover` と `env(safe-area-inset-*)`）。
+- 画面上部に、**タイトルの右隣に Ko-fi（支援）へのリンク**を置く。タブとは離し、小さく控えめな見た目にして、誤って押さないようにする。画像は使わず（外部から読み込まないため）、文字のボタンにする。押したときだけ、新しいタブで開く（`rel="noopener noreferrer"`）。狭い画面（480px 以下）では、1 段目にタイトルと Ko-fi、2 段目にタブを置く。
 - ダブルタップでの拡大を止める（`touch-action: manipulation`）。ボタンとカードには `user-select: none` を付ける。
 - ボタンの高さは 44pt 以上。アニメーションは最小限にする。システムのダークモードに合わせる。
 
