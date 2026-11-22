@@ -1,5 +1,5 @@
 // 作成画面：タグカードをタップしてプロンプトを組み立てる。
-import { state, onChange, findTag, catTags } from './state.js';
+import { state, onChange, findTag, catTags, locateTag } from './state.js';
 import { splitTags, joinTags, normKey, withTrailingComma } from './tags.js';
 import { $, el, toast } from './ui.js';
 import { tr, onLang } from './i18n.js';
@@ -155,8 +155,8 @@ function renderCats() {
     const btn = el('button', {
       type: 'button',
       className: 'cat-btn' + (cat.id === currentCat ? ' active' : ''),
-      textContent: cat.categoryName,
-    });
+    }, [el('span', { className: 'cat-name', textContent: cat.categoryName }), el('span', { className: 'cat-count', hidden: true })]);
+    btn.dataset.id = cat.id;
     btn.addEventListener('click', () => {
       currentCat = cat.id;
       saveText(LAST_KEY, cat.id);
@@ -165,6 +165,26 @@ function renderCats() {
       $('cards').scrollTop = 0;
     });
     bar.append(btn);
+  }
+  updateCatMarks();
+}
+
+// 選んだカードがあるカテゴリーのボタンに、色付きの枠と枚数を出す（どこで選んだか探しやすくするため）。
+function updateCatMarks() {
+  const counts = new Map();
+  for (const id of work.selected) {
+    const found = locateTag(id);
+    if (found) counts.set(found.cat.id, (counts.get(found.cat.id) || 0) + 1);
+  }
+  for (const btn of $('cats').querySelectorAll('.cat-btn')) {
+    const n = counts.get(btn.dataset.id) || 0;
+    btn.classList.toggle('has-sel', n > 0);
+    const badge = btn.querySelector('.cat-count');
+    badge.hidden = n === 0;
+    badge.textContent = String(n);
+    const name = btn.querySelector('.cat-name').textContent;
+    if (n > 0) btn.setAttribute('aria-label', tr(`${name}（選択中 ${n} 枚）`, `${name} (${n} selected)`));
+    else btn.removeAttribute('aria-label');
   }
 }
 
@@ -218,6 +238,7 @@ function renderCards() {
     const head = el('button', { type: 'button', className: 'group-head' }, [
       el('span', { className: 'group-arrow', textContent: open ? '▼' : '▶' }),
       el('span', { textContent: tr(`${group.name}（${group.tags.length}）`, `${group.name} (${group.tags.length})`) }),
+      el('span', { className: 'group-sel', hidden: true }),
     ]);
     head.setAttribute('aria-expanded', String(open));
     const grid = el('div', { className: 'group-cards' });
@@ -243,6 +264,15 @@ function updateCardSelection() {
     card.classList.toggle('selected', on);
     card.setAttribute('aria-pressed', String(on));
   }
+  // グループの見出しにも、選んだ枚数を出す
+  for (const section of $('cards').querySelectorAll('.group')) {
+    const n = section.querySelectorAll('.card.selected').length;
+    section.querySelector('.group-head').classList.toggle('has-sel', n > 0);
+    const badge = section.querySelector('.group-sel');
+    badge.hidden = n === 0;
+    badge.textContent = tr(`選択 ${n}`, `${n} selected`);
+  }
+  updateCatMarks();
 }
 
 function renderChips() {

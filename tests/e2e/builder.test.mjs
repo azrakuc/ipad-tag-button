@@ -122,3 +122,31 @@ test('ランダム：カテゴリー全体から 1 個、固定は残す、対�
   assert.match(await page.textContent('#toast'), /ランダムにするものがありません/);
   await app.close();
 });
+
+test('選んだカードがあるカテゴリーのボタンに、色付きの枠と枚数が付く', async () => {
+  const app = await openApp(server.url, { device: devices['iPhone 13'] });
+  const { page } = app;
+  await seed(page, DATA);
+  const marks = () => page.$$eval('.cat-btn', (b) => b.map((x) => `${x.querySelector('.cat-name').textContent}:${x.classList.contains('has-sel') ? x.querySelector('.cat-count').textContent : '-'}`).join(' '));
+  assert.equal(await marks(), '品質:- キャラ:-');
+  await page.click('.cat-btn:has-text("キャラ")');
+  await page.click('.card:has-text("メイド")'); await page.click('.card:has-text("笑顔")');
+  assert.equal(await marks(), '品質:- キャラ:2');
+  // 別のカテゴリーを開いても、選んだカテゴリーの印は残る
+  await page.click('.cat-btn:has-text("品質")');
+  assert.equal(await marks(), '品質:- キャラ:2');
+  const border = await page.$eval('.cat-btn:has-text("キャラ")', (b) => getComputedStyle(b).borderTopColor);
+  assert.equal(border, 'rgb(255, 149, 0)');
+  assert.equal(await page.getAttribute('.cat-btn:has-text("キャラ")', 'aria-label'), 'キャラ（選択中 2 枚）');
+  // グループ見出しにも枚数が出る
+  await page.click('.cat-btn:has-text("キャラ")');
+  assert.deepEqual(await page.$$eval('.group-head', (h) => h.map((x) => (x.classList.contains('has-sel') ? x.querySelector('.group-sel').textContent : '-'))), ['-', '選択 1', '選択 1']);
+  // 外すと印が消える
+  await page.click('.card:has-text("メイド")'); await page.click('.card:has-text("笑顔")');
+  assert.equal(await marks(), '品質:- キャラ:-');
+  // 横にはみ出さない（印の分だけ幅が増えても）
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  assert.deepEqual(app.errors, []);
+  await app.close();
+});
+
