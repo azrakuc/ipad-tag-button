@@ -5,6 +5,7 @@ import { init as initManager } from './manager.js';
 import { init as initImage } from './imageview.js';
 import { receive } from './extract.js';
 import { $, initModeSelects } from './ui.js';
+import { init as initLang, tr } from './i18n.js';
 
 const VIEWS = ['builder', 'manager', 'image', 'help'];
 
@@ -42,6 +43,7 @@ function setupServiceWorker() {
 }
 
 async function main() {
+  initLang();
   // 他の初期化が失敗しても、画面の切り替えと更新の案内は動くように、先に設定する。
   for (const tab of document.querySelectorAll('.tab')) {
     tab.addEventListener('click', () => showView(tab.dataset.view));
@@ -55,7 +57,7 @@ async function main() {
   try {
     await initState();
   } catch (e) {
-    alert('データベースを開けませんでした。プライベートブラウズの場合は、通常のブラウズで開いてください。\n' + e.message);
+    alert(tr('データベースを開けませんでした。プライベートブラウズの場合は、通常のブラウズで開いてください。\n', 'Could not open the database. If you are in private browsing, please open the app in a normal window.\n') + e.message);
   }
   initModeSelects();
   initBuilder();

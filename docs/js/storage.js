@@ -1,3 +1,4 @@
+import { tr } from './i18n.js';
 // IndexedDB への保存と、データの検証・整形。
 // データ形式は元の Chrome 拡張機能（tag_button）と同じ：
 //   [{ id, categoryName, groups: [{ id, name, tags: [{ id, name, content, thumbnail }] }] }]
@@ -38,7 +39,7 @@ function normalizeTag(raw, seenIds, counts) {
 // 形式：[{ id, categoryName, groups: [{ id, name, tags: [...] }] }]
 // 元の拡張機能の形式（groups がなく tags だけ）は、1 つのグループ「タグ」にまとめて読み込む。
 export function normalizeCategories(data) {
-  if (!Array.isArray(data)) throw new Error('形式が正しくありません（配列ではありません）。');
+  if (!Array.isArray(data)) throw new Error(tr('形式が正しくありません（配列ではありません）。', 'Invalid format (not an array).'));
   const seenIds = new Set();
   const uniqueId = (raw) => {
     let id = isText(raw) ? raw : newId();
@@ -60,7 +61,7 @@ export function normalizeCategories(data) {
     const catId = uniqueId(c.id);
     let rawGroups;
     if (Array.isArray(c.groups)) rawGroups = c.groups;
-    else rawGroups = Array.isArray(c.tags) && c.tags.length > 0 ? [{ name: 'タグ', tags: c.tags }] : [];
+    else rawGroups = Array.isArray(c.tags) && c.tags.length > 0 ? [{ name: tr('タグ', 'Tags'), tags: c.tags }] : [];
 
     const groups = [];
     for (const g of rawGroups) {
@@ -110,7 +111,7 @@ async function set(key, value) {
     tx.objectStore(STORE).put(value, key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
-    tx.onabort = () => reject(tx.error || new Error('保存が中止されました。'));
+    tx.onabort = () => reject(tx.error || new Error(tr('保存が中止されました。', 'Saving was aborted.')));
   });
 }
 

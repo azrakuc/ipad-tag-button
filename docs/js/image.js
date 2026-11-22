@@ -1,5 +1,7 @@
 // サムネイルを 128px 以内に縮小して data URL にする。
 // Safari は WebP で書き出せず PNG になるが、どちらも透明部分を残せるのでそのまま使う。
+import { tr } from './i18n.js';
+
 const MAX = 128;
 
 export function resizeImage(file) {
@@ -8,7 +10,7 @@ export function resizeImage(file) {
     const img = new Image();
     img.onerror = () => {
       URL.revokeObjectURL(url);
-      reject(new Error('画像を読み込めませんでした。'));
+      reject(new Error(tr('画像を読み込めませんでした。', 'Could not load the image.')));
     };
     img.onload = () => {
       URL.revokeObjectURL(url);

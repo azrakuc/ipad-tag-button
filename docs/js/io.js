@@ -2,6 +2,7 @@
 import { state, updateMeta, catTags } from './state.js';
 import { LIMITS, newId, normalizeCategories } from './storage.js';
 import { normKey } from './tags.js';
+import { tr } from './i18n.js';
 
 const pad = (n) => String(n).padStart(2, '0');
 const today = () => {
@@ -44,16 +45,16 @@ export async function share() {
 
 // ファイルを読んで検証する。不正なら例外を投げる（データは一切変更しない）。
 export async function parseFile(file) {
-  if (file.size > LIMITS.fileBytes) throw new Error('ファイルが大きすぎます（20MB まで）。');
+  if (file.size > LIMITS.fileBytes) throw new Error(tr('ファイルが大きすぎます（20MB まで）。', 'The file is too large (up to 20 MB).'));
   let data;
   try {
     data = JSON.parse(await file.text());
   } catch {
-    throw new Error('JSON として読めません。');
+    throw new Error(tr('JSON として読めません。', 'Could not read it as JSON.'));
   }
   const result = normalizeCategories(data);
   if (result.categories.length === 0 && (result.skippedCategories > 0 || data.length > 0)) {
-    throw new Error('読み込める内容がありませんでした。');
+    throw new Error(tr('読み込める内容がありませんでした。', 'There was nothing to import.'));
   }
   return result;
 }

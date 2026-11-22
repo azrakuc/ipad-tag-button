@@ -21,19 +21,20 @@
     <div class="brand">
       <h1>Smart Tag Button</h1>
       <a class="kofi" href="https://ko-fi.com/azrakuc" target="_blank" rel="noopener noreferrer"
-        aria-label="Ko-fi で支援する（外部のサイトが開きます）">☕ Ko-fi</a>
+        aria-label="Ko-fi で支援する（外部のサイトが開きます）" data-en-aria-label="Support on Ko-fi (opens an external site)">☕ Ko-fi</a>
+      <button id="lang-toggle" class="lang" type="button" aria-label="Switch to English">English</button>
     </div>
-    <nav class="tabs" role="tablist" aria-label="画面">
-      <button class="tab" type="button" role="tab" data-view="builder">作成</button>
-      <button class="tab" type="button" role="tab" data-view="manager">管理</button>
-      <button class="tab" type="button" role="tab" data-view="image">画像</button>
-      <button class="tab" type="button" role="tab" data-view="help">説明</button>
+    <nav class="tabs" role="tablist" aria-label="画面" data-en-aria-label="Views">
+      <button class="tab" type="button" role="tab" data-view="builder" data-en="Build">作成</button>
+      <button class="tab" type="button" role="tab" data-view="manager" data-en="Manage">管理</button>
+      <button class="tab" type="button" role="tab" data-view="image" data-en="Image">画像</button>
+      <button class="tab" type="button" role="tab" data-view="help" data-en="Help">説明</button>
     </nav>
   </header>
 
   <div id="update-banner" class="banner" hidden>
-    <span>新しい版があります。</span>
-    <button id="update-btn" class="btn btn-primary" type="button">更新する</button>
+    <span data-en="A new version is available.">新しい版があります。</span>
+    <button id="update-btn" class="btn btn-primary" type="button" data-en="Update">更新する</button>
   </div>
 
   <main>
@@ -44,15 +45,15 @@
         <div id="cats" class="catbar"></div>
       </div>
       <div class="b-right">
-        <div class="panel-title">選択中のタグ</div>
+        <div class="panel-title" data-en="Selected tags">選択中のタグ</div>
         <div id="chips" class="chips"></div>
         <textarea id="output" class="output" rows="3" readonly
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-          placeholder="ここに完成したプロンプトが表示されます"></textarea>
+          placeholder="ここに完成したプロンプトが表示されます" data-en-placeholder="Your finished prompt appears here"></textarea>
         <div class="actions">
-          <button id="reorder-btn" class="btn" type="button" aria-pressed="false">並べ替え</button>
-          <button id="clear-btn" class="btn" type="button">クリア</button>
-          <button id="copy-btn" class="btn btn-primary btn-wide" type="button">コピー</button>
+          <button id="reorder-btn" class="btn" type="button" aria-pressed="false" data-en="Reorder">並べ替え</button>
+          <button id="clear-btn" class="btn" type="button" data-en="Clear">クリア</button>
+          <button id="copy-btn" class="btn btn-primary btn-wide" type="button" data-en="Copy">コピー</button>
         </div>
       </div>
     </section>
@@ -62,22 +63,22 @@
       <div class="m-grid">
         <div class="card-box">
           <div class="box-head">
-            <h2>カテゴリー</h2>
-            <button id="m-add-cat" class="btn btn-primary" type="button">＋ 追加</button>
+            <h2 data-en="Categories">カテゴリー</h2>
+            <button id="m-add-cat" class="btn btn-primary" type="button" data-en="+ Add">＋ 追加</button>
           </div>
           <ul id="m-cats" class="m-list"></ul>
         </div>
         <div class="card-box">
           <div class="box-head">
             <h2 id="m-groups-title">グループ</h2>
-            <button id="m-add-group" class="btn btn-primary" type="button">＋ 追加</button>
+            <button id="m-add-group" class="btn btn-primary" type="button" data-en="+ Add">＋ 追加</button>
           </div>
           <ul id="m-groups" class="m-list"></ul>
         </div>
         <div class="card-box">
           <div class="box-head">
             <h2 id="m-tags-title">タグ</h2>
-            <button id="m-add-tag" class="btn btn-primary" type="button">＋ 追加</button>
+            <button id="m-add-tag" class="btn btn-primary" type="button" data-en="+ Add">＋ 追加</button>
           </div>
           <ul id="m-tags" class="m-list"></ul>
         </div>
@@ -85,74 +86,74 @@
 
       <!-- プロンプトの切り出し -->
       <div class="card-box" id="x-box">
-        <div class="box-head"><h2>プロンプトの切り出し</h2></div>
+        <div class="box-head"><h2 data-en="Extract from a prompt">プロンプトの切り出し</h2></div>
 
         <div class="field">
-          <span>① 元のプロンプト（貼り付けるか、画像から読み込む）</span>
+          <span data-en="① Source prompt (paste it, or load it from an image)">① 元のプロンプト（貼り付けるか、画像から読み込む）</span>
           <textarea id="x-source" rows="6"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-            placeholder="ここに長いプロンプトを貼り付けます"></textarea>
+            placeholder="ここに長いプロンプトを貼り付けます" data-en-placeholder="Paste a long prompt here"></textarea>
           <div class="row-actions">
-            <button id="x-image" class="btn" type="button">画像から</button>
-            <button id="x-clear" class="btn" type="button">クリア</button>
+            <button id="x-image" class="btn" type="button" data-en="From image">画像から</button>
+            <button id="x-clear" class="btn" type="button" data-en="Clear">クリア</button>
             <input id="x-image-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
           </div>
         </div>
 
         <div class="field">
-          <span>② タグに分けたもの（タップで内容に追加。薄い色は登録済み）</span>
-          <select class="mode-select" id="x-mode" aria-label="分け方">
-            <option value="comma">カンマで分ける</option>
-            <option value="sentence">文で分ける（文章形式向け）</option>
-            <option value="whole">分けない</option>
+          <span data-en="② Split into tags (tap to add to the content; faded ones are already registered)">② タグに分けたもの（タップで内容に追加。薄い色は登録済み）</span>
+          <select class="mode-select" id="x-mode" aria-label="分け方" data-en-aria-label="Split mode">
+            <option value="comma" data-en="Split by commas">カンマで分ける</option>
+            <option value="sentence" data-en="Split by sentences (for prose prompts)">文で分ける（文章形式向け）</option>
+            <option value="whole" data-en="Don't split">分けない</option>
           </select>
           <div id="x-chips" class="pick-list"></div>
         </div>
 
         <div class="field">
-          <span>③ 新しいタグ</span>
+          <span data-en="③ New tag">③ 新しいタグ</span>
           <p id="x-target" class="muted x-target"></p>
-          <input id="x-name" type="text" maxlength="100" placeholder="名前"
+          <input id="x-name" type="text" maxlength="100" placeholder="名前" data-en-placeholder="Name"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-          <textarea id="x-content" rows="3" maxlength="5000" placeholder="内容（②のタップで入ります。手で直すこともできます）"
+          <textarea id="x-content" rows="3" maxlength="5000" placeholder="内容（②のタップで入ります。手で直すこともできます）" data-en-placeholder="Content (filled by tapping chips in ②; you can also edit it)"
             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
           <div class="x-thumb">
             <img id="x-thumb" alt="" hidden>
-            <button id="x-thumb-pick" class="btn" type="button">サムネイルを選ぶ</button>
-            <button id="x-thumb-src" class="btn" type="button" hidden>元の画像を使う</button>
-            <button id="x-thumb-del" class="btn" type="button" hidden>外す</button>
+            <button id="x-thumb-pick" class="btn" type="button" data-en="Choose thumbnail">サムネイルを選ぶ</button>
+            <button id="x-thumb-src" class="btn" type="button" hidden data-en="Use the source image">元の画像を使う</button>
+            <button id="x-thumb-del" class="btn" type="button" hidden data-en="Remove">外す</button>
             <input id="x-thumb-file" type="file" accept="image/*" hidden>
           </div>
         </div>
         <div class="row-actions">
-          <button id="x-append" class="btn" type="button">既存のタグに追記</button>
-          <button id="x-unselect" class="btn" type="button">選択を解除</button>
+          <button id="x-append" class="btn" type="button" data-en="Append to existing tag">既存のタグに追記</button>
+          <button id="x-unselect" class="btn" type="button" data-en="Deselect all">選択を解除</button>
           <span class="spacer"></span>
-          <button id="x-register" class="btn btn-primary" type="button">登録</button>
+          <button id="x-register" class="btn btn-primary" type="button" data-en="Register">登録</button>
         </div>
       </div>
 
       <div class="card-box">
-        <div class="box-head"><h2>設定</h2></div>
+        <div class="box-head"><h2 data-en="Settings">設定</h2></div>
         <label class="field">
-          <span>コピーするときの区切り文字</span>
+          <span data-en="Separator used when copying">コピーするときの区切り文字</span>
           <select id="s-separator">
-            <option value="comma-space">カンマ + スペース（, ）</option>
-            <option value="comma">カンマ（,）</option>
-            <option value="space">スペース</option>
-            <option value="newline">改行</option>
+            <option value="comma-space" data-en="Comma + space (, )">カンマ + スペース（, ）</option>
+            <option value="comma" data-en="Comma (,)">カンマ（,）</option>
+            <option value="space" data-en="Space">スペース</option>
+            <option value="newline" data-en="New line">改行</option>
           </select>
         </label>
         <p id="s-storage" class="muted"></p>
       </div>
 
       <div class="card-box">
-        <div class="box-head"><h2>データ</h2></div>
-        <p class="muted">カテゴリーとタグを JSON ファイルに書き出してバックアップできます。元の Chrome 拡張機能（tag_button）の JSON もそのまま読み込めます。</p>
+        <div class="box-head"><h2 data-en="Data">データ</h2></div>
+        <p class="muted" data-en="You can back up your categories and tags by exporting them to a JSON file. JSON exported from the original Chrome extension (tag_button) can also be imported as is.">カテゴリーとタグを JSON ファイルに書き出してバックアップできます。元の Chrome 拡張機能（tag_button）の JSON もそのまま読み込めます。</p>
         <div class="row-actions">
-          <button id="d-export" class="btn" type="button">エクスポート</button>
-          <button id="d-share" class="btn" type="button" hidden>共有…</button>
-          <button id="d-import" class="btn" type="button">インポート</button>
+          <button id="d-export" class="btn" type="button" data-en="Export">エクスポート</button>
+          <button id="d-share" class="btn" type="button" hidden data-en="Share…">共有…</button>
+          <button id="d-import" class="btn" type="button" data-en="Import">インポート</button>
           <input id="d-file" type="file" accept="application/json,.json" hidden>
         </div>
         <p id="d-last" class="muted"></p>
@@ -164,9 +165,9 @@
     <!-- 画像画面 -->
     <section id="view-image" hidden>
       <div id="i-drop" class="dropzone">
-        <p id="i-drop-text" class="muted">ここに画像をドロップ（PNG / JPEG / WebP）</p>
+        <p id="i-drop-text" class="muted" data-en="Drop an image here (PNG / JPEG / WebP)">ここに画像をドロップ（PNG / JPEG / WebP）</p>
         <img id="i-preview" alt="" hidden>
-        <button id="i-pick" class="btn btn-primary" type="button">画像を選ぶ</button>
+        <button id="i-pick" class="btn btn-primary" type="button" data-en="Choose an image">画像を選ぶ</button>
         <input id="i-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
       </div>
       <div class="i-result-col">
@@ -174,28 +175,28 @@
         <div id="i-result" hidden>
           <p id="i-source" class="panel-title"></p>
           <div class="box-head">
-            <h2>ポジティブ</h2>
-            <button id="i-copy-pos" class="btn" type="button">コピー</button>
+            <h2 data-en="Positive">ポジティブ</h2>
+            <button id="i-copy-pos" class="btn" type="button" data-en="Copy">コピー</button>
           </div>
-          <select class="mode-select" id="i-mode" aria-label="分け方">
-            <option value="comma">カンマで分ける</option>
-            <option value="sentence">文で分ける（文章形式向け）</option>
-            <option value="whole">分けない</option>
+          <select class="mode-select" id="i-mode" aria-label="分け方" data-en-aria-label="Split mode">
+            <option value="comma" data-en="Split by commas">カンマで分ける</option>
+            <option value="sentence" data-en="Split by sentences (for prose prompts)">文で分ける（文章形式向け）</option>
+            <option value="whole" data-en="Don't split">分けない</option>
           </select>
           <div id="i-pos" class="pick-list"></div>
           <div class="box-head i-gap">
-            <h2>ネガティブ</h2>
-            <button id="i-copy-neg" class="btn" type="button">コピー</button>
+            <h2 data-en="Negative">ネガティブ</h2>
+            <button id="i-copy-neg" class="btn" type="button" data-en="Copy">コピー</button>
           </div>
           <p id="i-neg" class="pre i-neg"></p>
           <dl id="i-settings" class="i-settings"></dl>
           <div class="row-actions">
-            <button id="i-add" class="btn" type="button">作業欄に追加</button>
-            <button id="i-extract" class="btn btn-primary" type="button">管理で切り出す</button>
+            <button id="i-add" class="btn" type="button" data-en="Add to work area">作業欄に追加</button>
+            <button id="i-extract" class="btn btn-primary" type="button" data-en="Extract in Manage">管理で切り出す</button>
           </div>
         </div>
         <details id="i-raw" hidden>
-          <summary>元のデータをすべて表示</summary>
+          <summary data-en="Show all raw data">元のデータをすべて表示</summary>
           <div id="i-raw-body"></div>
         </details>
       </div>
@@ -203,7 +204,7 @@
 
     <!-- 説明画面 -->
     <section id="view-help" hidden>
-      <div class="help">
+      <div class="help" lang="ja">
         <p class="help-lead">登録したタグをボタン（カード）で組み合わせてプロンプトを作り、コピーして Draw Things などに貼り付けるアプリです。見出しをタップすると開閉します。</p>
 
         <details class="help-sec" open>
@@ -277,6 +278,80 @@
 
         <p class="credit">created by azrakuc</p>
       </div>
+      <div class="help" lang="en" hidden>
+        <p class="help-lead">Build prompts by combining your registered tags with buttons (cards), then copy the result and paste it into Draw Things or another app. Tap a heading to open or close a section.</p>
+
+        <details class="help-sec" open>
+          <summary>Build a prompt (Build tab)</summary>
+          <ol>
+            <li>Pick a category with the buttons at the bottom.</li>
+            <li>Tap a card and its tags are collected in "Selected tags" on the right (below on a portrait screen). Tap it again to remove them.</li>
+            <li>Press and hold a card to see the content of its tags.</li>
+            <li>Use "×" on a tag to remove it. "Reorder" lets you drag tags to change their order. "Clear" removes everything (an "Undo" button appears right after).</li>
+            <li>Press "Copy", then paste into Draw Things or another app. Placing the apps side by side with iPad Split View lets you paste without switching back and forth.</li>
+          </ol>
+          <p class="muted">The same tag is never added twice. You can change the separator used when copying in "Settings" on the Manage tab.</p>
+        </details>
+
+        <details class="help-sec">
+          <summary>Register tags (Manage tab)</summary>
+          <ul>
+            <li>Tags are organized in three levels: <strong>Category &gt; Group &gt; Tag</strong> (for example, category "Characters", group "Outfits", tag "Waitress").</li>
+            <li>Create each one with "+ Add", and use "Edit" to rename or delete it. In the tag editor you can also change the content (separate with commas or line breaks), the thumbnail, the location, and duplicate it.</li>
+            <li>Grab "☰" on the left and drag up or down to reorder items within the same level.</li>
+            <li>Deleting a category or group also deletes the tags inside it.</li>
+          </ul>
+        </details>
+
+        <details class="help-sec">
+          <summary>Extract tags from a long prompt (Manage tab)</summary>
+          <ol>
+            <li>Select the category and group you want to register to in the lists above.</li>
+            <li>Paste a long prompt into "① Source prompt" (you can also load it from an image).</li>
+            <li>It is split into tags in "② Chips". Tap the chips you want and they are added to the content of "③ New tag". Tap again to remove them. Faded chips are already included in registered tags.</li>
+            <li>Enter a name and press "Register". The text in ① stays, so you can keep extracting the next tag.</li>
+          </ol>
+          <p class="muted">For prose-style prompts, set the "Split mode" dropdown to "Split by sentences" to get one chip per sentence. "Append to existing tag" adds to a tag you already have.</p>
+        </details>
+
+        <details class="help-sec">
+          <summary>Extract a prompt from an image (Image tab)</summary>
+          <ul>
+            <li>Press "Choose an image", or drop an image from Split View. PNG, JPEG and WebP are supported.</li>
+            <li>The positive prompt, negative prompt and settings are extracted from images made with Draw Things, A1111 / Forge, ComfyUI and NovelAI.</li>
+            <li>You can "Copy", "Add to work area" (sends tags to the Build tab) or "Extract in Manage" (uses it as the source for registering).</li>
+            <li>The image is only read on this device. It is never sent or saved.</li>
+          </ul>
+          <p class="muted">Images that went through the Photos app may have lost their prompt information. Please choose the original image saved in the Files app.</p>
+        </details>
+
+        <details class="help-sec">
+          <summary>Add to Home Screen and back up</summary>
+          <ul>
+            <li>In Safari, tap Share &rarr; "Add to Home Screen" to use it like an app. If you don't, Safari may delete your registered data after a period of not using it.</li>
+            <li>Your data is stored only on this device. To prepare for changing devices or losing data, use "Export" on the Manage tab to save a JSON file regularly. You can restore it with "Import".</li>
+            <li>When "A new version is available" appears, press "Update".</li>
+          </ul>
+        </details>
+
+        <details class="help-sec">
+          <summary>Privacy</summary>
+          <ul>
+            <li>Your registered data, and the images and prompts you load, are never sent outside this device.</li>
+            <li>To learn whether the app is being used, I count only the fact that "a page was opened" with the analytics service GoatCounter. No cookies are used, and the contents of your tags, images and so on are not sent.</li>
+            <li>The "Ko-fi" link at the top of the screen opens an external site only when you press it.</li>
+          </ul>
+        </details>
+
+        <details class="help-sec" open>
+          <summary>Support</summary>
+          <p>This app is free to use. If you find it useful, supporting me on Ko-fi is a great encouragement to keep developing it. Support is optional, and every feature works without it.</p>
+          <p><a class="btn btn-primary help-kofi" href="https://ko-fi.com/azrakuc" target="_blank" rel="noopener noreferrer">☕ Support on Ko-fi</a></p>
+          <p class="muted">This opens an external site (Ko-fi) in a new tab.</p>
+        </details>
+
+        <p class="credit">created by azrakuc</p>
+      </div>
     </section>
   </main>
 
@@ -287,15 +362,15 @@
 <dialog id="dlg-cat">
   <h3 id="c-title">カテゴリー</h3>
   <label class="field">
-    <span>カテゴリー名</span>
+    <span data-en="Category name">カテゴリー名</span>
     <input id="c-name" type="text" maxlength="100"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </label>
   <div class="dlg-actions">
-    <button id="c-del" class="btn btn-danger" type="button">削除</button>
+    <button id="c-del" class="btn btn-danger" type="button" data-en="Delete">削除</button>
     <span class="spacer"></span>
-    <button id="c-cancel" class="btn" type="button">キャンセル</button>
-    <button id="c-save" class="btn btn-primary" type="button">保存</button>
+    <button id="c-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
+    <button id="c-save" class="btn btn-primary" type="button" data-en="Save">保存</button>
   </div>
 </dialog>
 
@@ -303,15 +378,15 @@
 <dialog id="dlg-group">
   <h3 id="g-title">グループ</h3>
   <label class="field">
-    <span>グループ名（例：衣装、表情）</span>
+    <span data-en="Group name (e.g. outfits, expressions)">グループ名（例：衣装、表情）</span>
     <input id="g-name" type="text" maxlength="100"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </label>
   <div class="dlg-actions">
-    <button id="g-del" class="btn btn-danger" type="button">削除</button>
+    <button id="g-del" class="btn btn-danger" type="button" data-en="Delete">削除</button>
     <span class="spacer"></span>
-    <button id="g-cancel" class="btn" type="button">キャンセル</button>
-    <button id="g-save" class="btn btn-primary" type="button">保存</button>
+    <button id="g-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
+    <button id="g-save" class="btn btn-primary" type="button" data-en="Save">保存</button>
   </div>
 </dialog>
 
@@ -319,71 +394,71 @@
 <dialog id="dlg-tag">
   <h3 id="t-title">タグ</h3>
   <label class="field">
-    <span>名前</span>
+    <span data-en="Name">名前</span>
     <input id="t-name" type="text" maxlength="100"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </label>
   <label class="field">
-    <span>内容（カンマか改行で区切る）</span>
+    <span data-en="Content (separate with commas or line breaks)">内容（カンマか改行で区切る）</span>
     <textarea id="t-content" rows="5" maxlength="5000"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
   </label>
   <label class="field">
-    <span>カテゴリー</span>
+    <span data-en="Category">カテゴリー</span>
     <select id="t-cat"></select>
   </label>
   <label class="field">
-    <span>グループ</span>
+    <span data-en="Group">グループ</span>
     <select id="t-group"></select>
   </label>
   <div class="field">
-    <span>サムネイル（任意）</span>
+    <span data-en="Thumbnail (optional)">サムネイル（任意）</span>
     <input id="t-file" type="file" accept="image/*">
     <div id="t-thumb-box" class="thumb-box" hidden>
       <img id="t-thumb" alt="">
-      <button id="t-thumb-del" class="btn" type="button">画像を外す</button>
+      <button id="t-thumb-del" class="btn" type="button" data-en="Remove image">画像を外す</button>
     </div>
   </div>
   <div class="dlg-actions">
-    <button id="t-del" class="btn btn-danger" type="button">削除</button>
-    <button id="t-dup" class="btn" type="button">複製</button>
+    <button id="t-del" class="btn btn-danger" type="button" data-en="Delete">削除</button>
+    <button id="t-dup" class="btn" type="button" data-en="Duplicate">複製</button>
     <span class="spacer"></span>
-    <button id="t-cancel" class="btn" type="button">キャンセル</button>
-    <button id="t-save" class="btn btn-primary" type="button">保存</button>
+    <button id="t-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
+    <button id="t-save" class="btn btn-primary" type="button" data-en="Save">保存</button>
   </div>
 </dialog>
 
 <!-- インポート確認 -->
 <dialog id="dlg-import">
-  <h3>インポート</h3>
+  <h3 data-en="Import">インポート</h3>
   <p id="i-summary" class="pre"></p>
-  <p class="muted">全置換の前には、今のデータを自動でエクスポートします。</p>
+  <p class="muted" data-en="Before a full replace, your current data is exported automatically.">全置換の前には、今のデータを自動でエクスポートします。</p>
   <div class="dlg-actions">
-    <button id="i-cancel" class="btn" type="button">キャンセル</button>
+    <button id="i-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
     <span class="spacer"></span>
-    <button id="i-append" class="btn" type="button">追加</button>
-    <button id="i-replace" class="btn btn-danger" type="button">全置換</button>
+    <button id="i-append" class="btn" type="button" data-en="Add">追加</button>
+    <button id="i-replace" class="btn btn-danger" type="button" data-en="Replace all">全置換</button>
   </div>
 </dialog>
 
 <!-- 切り出し元の置き換え確認 -->
 <dialog id="dlg-source">
-  <h3>元のプロンプトに入れる</h3>
-  <p>元のプロンプトにはすでに内容があります。</p>
+  <h3 data-en="Put into the source prompt">元のプロンプトに入れる</h3>
+  <p data-en="The source prompt already has content.">元のプロンプトにはすでに内容があります。</p>
   <div class="dlg-actions">
-    <button id="s-cancel" class="btn" type="button">キャンセル</button>
+    <button id="s-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
     <span class="spacer"></span>
-    <button id="s-add" class="btn" type="button">末尾に足す</button>
-    <button id="s-replace" class="btn btn-danger" type="button">置き換える</button>
+    <button id="s-add" class="btn" type="button" data-en="Append to the end">末尾に足す</button>
+    <button id="s-replace" class="btn btn-danger" type="button" data-en="Replace">置き換える</button>
   </div>
 </dialog>
 
 <!-- 既存のタグに追記 -->
 <dialog id="dlg-append">
-  <h3>どのタグに追記しますか</h3>
+  <h3 data-en="Which tag do you want to append to?">どのタグに追記しますか</h3>
   <ul id="a-list" class="m-list"></ul>
   <div class="dlg-actions">
-    <button id="a-cancel" class="btn" type="button">キャンセル</button>
+    <button id="a-cancel" class="btn" type="button" data-en="Cancel">キャンセル</button>
   </div>
 </dialog>
 

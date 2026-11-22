@@ -71,6 +71,20 @@ html, body {
   border-radius: 15px;
 }
 .kofi:active { opacity: 0.6; }
+/* 言語の切り替え。広い画面では Ko-fi の隣に、狭い画面では 1 段目の右端に置き、タブから離す */
+.lang {
+  flex: none;
+  min-height: 30px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  white-space: nowrap;
+}
+.lang:active { opacity: 0.6; }
 
 .banner {
   display: flex;
@@ -486,8 +500,10 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
 }
 
 /* 狭い画面（iPhone の縦）では 2 段にする：1 段目にタイトルと Ko-fi、2 段目にタブ */
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .topbar { flex-wrap: wrap; row-gap: 12px; padding-bottom: 8px; }
+  .brand { width: 100%; }
+  .lang { margin-left: auto; }
   .topbar h1 { font-size: 17px; }
   .tabs { width: 100%; }
   .tab { flex: 1; padding: 0 8px; }

@@ -1,6 +1,8 @@
 // 画像（PNG / JPEG / WebP）のメタデータを読み、生成元ごとにプロンプトを取り出す。
 // すべてブラウザの中だけで処理し、外部には何も送らない。DOM には依存しない。
 
+import { tr } from './i18n.js';
+
 export const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 const MAX_TEXT = 100000; // 1 つのテキスト項目から読む最大の文字数
 
@@ -216,7 +218,7 @@ export async function readEntries(bytes) {
   if (is(0x89, 0x50, 0x4e, 0x47)) entries = await readPng(bytes);
   else if (is(0xff, 0xd8)) entries = readJpeg(bytes);
   else if (is(0x52, 0x49, 0x46, 0x46) && latin1.decode(bytes.subarray(8, 12)) === 'WEBP') entries = readWebp(bytes);
-  else throw new Error('PNG、JPEG、WebP の画像を選んでください。');
+  else throw new Error(tr('PNG、JPEG、WebP の画像を選んでください。', 'Please choose a PNG, JPEG or WebP image.'));
   return entries.filter((e) => e.text);
 }
 
@@ -243,8 +245,8 @@ function fromDrawThings(obj) {
     positive: obj.c,
     negative: str(obj.uc),
     settings: pairs([
-      ['Seed', obj.seed], ['Steps', obj.steps], ['CFG', obj.scale], ['サンプラー', obj.sampler],
-      ['サイズ', obj.size], ['モデル', obj.model],
+      ['Seed', obj.seed], ['Steps', obj.steps], ['CFG', obj.scale], ['Sampler', obj.sampler],
+      ['Size', obj.size], ['Model', obj.model],
     ]),
   };
 }
@@ -257,8 +259,8 @@ function fromNovelAI(obj) {
     positive: obj.prompt,
     negative: str(obj.uc) || str(obj.negative_prompt),
     settings: pairs([
-      ['Seed', obj.seed], ['Steps', obj.steps], ['CFG', obj.scale], ['サンプラー', obj.sampler],
-      ['サイズ', obj.width && obj.height ? `${obj.width}x${obj.height}` : ''],
+      ['Seed', obj.seed], ['Steps', obj.steps], ['CFG', obj.scale], ['Sampler', obj.sampler],
+      ['Size', obj.width && obj.height ? `${obj.width}x${obj.height}` : ''],
     ]),
   };
 }
@@ -279,8 +281,8 @@ function fromA1111(text) {
     positive,
     negative,
     settings: pairs([
-      ['Seed', kv.Seed], ['Steps', kv.Steps], ['CFG', kv['CFG scale']], ['サンプラー', kv.Sampler],
-      ['サイズ', kv.Size], ['モデル', kv.Model],
+      ['Seed', kv.Seed], ['Steps', kv.Steps], ['CFG', kv['CFG scale']], ['Sampler', kv.Sampler],
+      ['Size', kv.Size], ['Model', kv.Model],
     ]),
   };
 }
@@ -315,7 +317,7 @@ function fromComfy(nodes) {
     positive: resolve(i.positive),
     negative: resolve(i.negative),
     settings: pairs([
-      ['Seed', i.seed ?? i.noise_seed], ['Steps', i.steps], ['CFG', i.cfg], ['サンプラー', i.sampler_name],
+      ['Seed', i.seed ?? i.noise_seed], ['Steps', i.steps], ['CFG', i.cfg], ['Sampler', i.sampler_name],
     ]),
   };
 }
@@ -342,10 +344,13 @@ export function extractPrompt(entries) {
 
 // ファイルを読んで { source, positive, negative, settings, raw } を返す。
 export async function readPrompt(file) {
-  if (file.size > MAX_IMAGE_BYTES) throw new Error('画像が大きすぎます（50MB まで）。');
+  if (file.size > MAX_IMAGE_BYTES) throw new Error(tr('画像が大きすぎます（50MB まで）。', 'The image is too large (up to 50 MB).'));
   const bytes = new Uint8Array(await file.arrayBuffer());
   return extractPrompt(await readEntries(bytes));
 }
 
-export const NO_PROMPT_MESSAGE =
-  'この画像にはプロンプトが入っていません。写真アプリを経由すると消えることがあります。「ファイル」アプリに保存した元の画像を選んでください。';
+export const noPromptMessage = () =>
+  tr(
+    'この画像にはプロンプトが入っていません。写真アプリを経由すると消えることがあります。「ファイル」アプリに保存した元の画像を選んでください。',
+    'This image has no prompt in it. The information can be lost when an image goes through the Photos app. Please choose the original image saved in the Files app.',
+  );
