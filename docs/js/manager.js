@@ -1,6 +1,6 @@
 // 管理画面：カテゴリー > グループ > タグ の登録、設定、データの読み書き。
 import { state, onChange, commit, updateSettings, catTags, locateTag } from './state.js';
-import { newId } from './storage.js';
+import { newId, normalizeRandom } from './storage.js';
 import { SEPARATORS } from './tags.js';
 import { resizeImage } from './image.js';
 import * as IO from './io.js';
@@ -35,6 +35,27 @@ function renderCats() {
   if (state.categories.length === 0) list.append(emptyItem(tr('カテゴリーがありません。', 'No categories.')));
 }
 
+// グループ一覧に出す、ランダム設定の短い表示（固定のときは出さない）
+function randomBadge(group) {
+  if (group.random?.mode === 'random') return tr(`🎲 ランダム ${group.random.count} 個`, `🎲 Random: ${group.random.count}`);
+  if (group.random?.mode === 'off') return tr('🎲 対象外', '🎲 Excluded');
+  return '';
+}
+
+// ランダムの選択肢と「いくつ選ぶか」の欄をそろえる
+function syncCountField(selectId, fieldId) {
+  $(fieldId).hidden = $(selectId).value !== 'random';
+}
+
+function readRandom(selectId, countId) {
+  return normalizeRandom({ mode: $(selectId).value, count: $(countId).value });
+}
+
+function applyRandom(group, random) {
+  if (random) group.random = random;
+  else delete group.random;
+}
+
 function renderGroups() {
   const list = $('m-groups');
   list.replaceChildren();
@@ -42,7 +63,11 @@ function renderGroups() {
   $('m-groups-title').textContent = cat ? tr(`「${cat.categoryName}」のグループ`, `Groups in "${cat.categoryName}"`) : tr('グループ', 'Groups');
   if (!cat) return list.append(emptyItem(tr('カテゴリーを選んでください。', 'Select a category.')));
   for (const group of cat.groups) {
-    const name = el('button', { type: 'button', className: 'm-main', textContent: tr(`${group.name}（${group.tags.length}）`, `${group.name} (${group.tags.length})`) });
+    const name = el('button', { type: 'button', className: 'm-main' }, [
+      el('span', { textContent: tr(`${group.name}（${group.tags.length}）`, `${group.name} (${group.tags.length})`) }),
+    ]);
+    const badge = randomBadge(group);
+    if (badge) name.append(el('span', { className: 'm-sub', textContent: badge }));
     name.addEventListener('click', () => {
       selGroupId = group.id;
       render();
@@ -103,6 +128,10 @@ function openCatDialog(id) {
   $('c-title').textContent = cat ? tr('カテゴリーを編集', 'Edit category') : tr('カテゴリーを追加', 'Add category');
   $('c-name').value = cat ? cat.categoryName : '';
   $('c-del').hidden = !cat;
+  $('c-random-box').hidden = !cat || cat.groups.length === 0;
+  $('c-random').value = 'keep';
+  $('c-count').value = '1';
+  syncCountField('c-random', 'c-count-field');
   $('dlg-cat').showModal();
 }
 
@@ -112,6 +141,10 @@ async function saveCat() {
   const cat = state.categories.find((c) => c.id === editingCatId);
   if (cat) {
     cat.categoryName = name;
+    if ($('c-random').value !== 'keep') {
+      const random = readRandom('c-random', 'c-count');
+      for (const g of cat.groups) applyRandom(g, random);
+    }
   } else {
     const created = { id: newId(), categoryName: name, groups: [] };
     state.categories.push(created);
@@ -141,6 +174,9 @@ function openGroupDialog(id) {
   $('g-title').textContent = group ? tr('グループを編集', 'Edit group') : tr('グループを追加', 'Add group');
   $('g-name').value = group ? group.name : '';
   $('g-del').hidden = !group;
+  $('g-random').value = group?.random?.mode || 'fixed';
+  $('g-count').value = String(group?.random?.count || 1);
+  syncCountField('g-random', 'g-count-field');
   $('dlg-group').showModal();
 }
 
@@ -149,10 +185,13 @@ async function saveGroup() {
   if (!name) return toast(tr('グループ名を入力してください', 'Enter a group name'));
   const cat = selCat();
   const group = cat.groups.find((g) => g.id === editingGroupId);
+  const random = readRandom('g-random', 'g-count');
   if (group) {
     group.name = name;
+    applyRandom(group, random);
   } else {
     const created = { id: newId(), name, tags: [] };
+    applyRandom(created, random);
     cat.groups.push(created);
     selGroupId = created.id;
   }
@@ -325,6 +364,8 @@ export function init() {
   $('m-add-group').addEventListener('click', () => openGroupDialog(null));
   $('m-add-tag').addEventListener('click', () => openTagDialog(null));
   $('c-save').addEventListener('click', saveCat);
+  $('c-random').addEventListener('change', () => syncCountField('c-random', 'c-count-field'));
+  $('g-random').addEventListener('change', () => syncCountField('g-random', 'g-count-field'));
   $('c-cancel').addEventListener('click', () => $('dlg-cat').close());
   $('c-del').addEventListener('click', deleteCat);
   $('g-save').addEventListener('click', saveGroup);

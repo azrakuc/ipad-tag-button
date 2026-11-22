@@ -119,7 +119,7 @@ html, body {
 .empty.small { padding: 12px; }
 .spacer { flex: 1; }
 
-input[type="text"], textarea, select {
+input[type="text"], input[type="number"], textarea, select {
   width: 100%;
   min-height: 44px;
   padding: 8px 10px;
@@ -370,7 +370,7 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .chips.reorder .chip-x { display: none; }
 
 .output { min-height: 72px; }
-.actions { display: flex; gap: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .btn[aria-pressed="true"] { background: var(--sel); border-color: var(--accent); }
 
 /* --- 管理画面 --- */
