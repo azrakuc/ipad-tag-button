@@ -7,6 +7,7 @@ import { tr, onLang } from './i18n.js';
 const WORK_KEY = 'itb:work';
 const LAST_KEY = 'itb:lastCategory';
 const COLLAPSED_KEY = 'itb:collapsedGroups';
+const SEL_COLLAPSED_KEY = 'itb:selCollapsed'; // 選択中のタグ欄を折りたたんでいるか（縦画面だけで効く）
 const LONG_PRESS_MS = 500;
 
 // 作業中の状態：work.tags = 並び順どおりのタグ [{ key, text }]、work.selected = 選択中のカード ID
@@ -219,7 +220,34 @@ function renderChips() {
   }
 }
 
+// 選択中のタグ欄の開閉。縦画面ではカードを選ぶ場所を広げるために折りたためる（横画面では常に開く）。
+let selCollapsed = (() => {
+  try {
+    return localStorage.getItem(SEL_COLLAPSED_KEY) === '1';
+  } catch {
+    return false;
+  }
+})();
+
+function applySelCollapsed() {
+  $('sel-panel').classList.toggle('collapsed', selCollapsed);
+  $('sel-toggle').setAttribute('aria-expanded', String(!selCollapsed));
+  $('sel-arrow').textContent = selCollapsed ? '▶' : '▼';
+}
+
+function toggleSel() {
+  selCollapsed = !selCollapsed;
+  if (selCollapsed && reorder) setReorder(false);
+  try {
+    localStorage.setItem(SEL_COLLAPSED_KEY, selCollapsed ? '1' : '0');
+  } catch {
+    // 保存できなくても動作には影響しない
+  }
+  applySelCollapsed();
+}
+
 function refresh() {
+  $('sel-title').textContent = tr(`選択中のタグ（${work.tags.length}）`, `Selected tags (${work.tags.length})`);
   updateCardSelection();
   renderChips();
   $('output').value = joinTags(work.tags.map((t) => t.text), state.settings.separator);
@@ -290,6 +318,9 @@ export function init() {
     },
   });
   $('copy-btn').addEventListener('click', copy);
+  $('copy-mini').addEventListener('click', copy);
+  $('sel-toggle').addEventListener('click', toggleSel);
+  applySelCollapsed();
   $('clear-btn').addEventListener('click', clearAll);
   $('reorder-btn').addEventListener('click', () => setReorder(!reorder));
   onChange(render);
