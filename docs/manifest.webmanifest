@@ -1,6 +1,6 @@
 {
-  "name": "Tag Button",
-  "short_name": "Tag Button",
+  "name": "Smart Tag Button",
+  "short_name": "Smart Tag Button",
   "description": "登録したタグをボタンで組み合わせてプロンプトを作る",
   "start_url": "./",
   "scope": "./",
