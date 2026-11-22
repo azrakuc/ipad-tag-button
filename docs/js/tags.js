@@ -1,7 +1,8 @@
 // タグの分割・重複判定・連結（DOM に依存しない）
 
-// 同じタグかどうかの比較用キー：前後の空白を除き、連続する空白を 1 つにして小文字にする。
-export const normKey = (s) => s.trim().replace(/\s+/g, ' ').toLowerCase();
+// 同じタグかどうかの比較用キー：前後の空白を除き、空白とアンダースコアを同じものとして 1 つにまとめ、小文字にする。
+// （Danbooru 表記の long_hair と、long hair を同じタグとみなす）
+export const normKey = (s) => s.trim().replace(/[\s_]+/g, ' ').toLowerCase();
 
 const OPEN = '([{';
 const CLOSE = ')]}';
@@ -48,6 +49,9 @@ export function splitTags(content) {
 export const SEPARATORS = { 'comma-space': ', ', comma: ',', space: ' ', newline: '\n' };
 
 export const joinTags = (texts, separator) => texts.join(separator);
+
+// 区切りがカンマのときは、末尾にもカンマを付ける（貼り付けたあと、後ろにタグを足しやすくするため）。
+export const withTrailingComma = (text, separator) => (text && separator.includes(',') ? text + separator : text);
 
 // --- 分け方（カンマ／文／分けない） ---
 // 文章形式のプロンプトは、カンマで分けると文の途中で切れてしまうため、文ごと・全体のまま扱う方法も用意する。

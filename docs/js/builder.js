@@ -1,6 +1,6 @@
 // 作成画面：タグカードをタップしてプロンプトを組み立てる。
 import { state, onChange, findTag, catTags } from './state.js';
-import { splitTags, joinTags } from './tags.js';
+import { splitTags, joinTags, normKey, withTrailingComma } from './tags.js';
 import { $, el, toast } from './ui.js';
 import { tr, onLang } from './i18n.js';
 
@@ -20,9 +20,12 @@ let chipSorter;
 function loadWork() {
   try {
     const w = JSON.parse(localStorage.getItem(WORK_KEY));
-    const tags = Array.isArray(w?.tags)
-      ? w.tags.filter((t) => t && typeof t.key === 'string' && typeof t.text === 'string')
-      : [];
+    // 比べ方（normKey）が変わっても重複しないよう、キーを作り直して重複を消す
+    const seen = new Set();
+    const tags = (Array.isArray(w?.tags) ? w.tags : [])
+      .filter((t) => t && typeof t.text === 'string' && t.text.trim())
+      .map((t) => ({ key: normKey(t.text), text: t.text }))
+      .filter((t) => !seen.has(t.key) && seen.add(t.key));
     const selected = Array.isArray(w?.selected) ? w.selected.filter((s) => typeof s === 'string') : [];
     return { tags, selected };
   } catch {
@@ -139,6 +142,14 @@ function randomize() {
   const picked = [];
   let randomGroups = 0;
   for (const cat of state.categories) {
+    // カテゴリーの設定が先：全体から選ぶ（対象外のグループは除く）／対象外／グループごと
+    if (cat.random?.mode === 'off') continue;
+    if (cat.random?.mode === 'random') {
+      randomGroups++;
+      const pool = cat.groups.filter((g) => g.random?.mode !== 'off').flatMap((g) => g.tags);
+      picked.push(...pickRandom(pool, cat.random.count).map((t) => t.id));
+      continue;
+    }
     for (const g of cat.groups) {
       const mode = g.random?.mode || 'fixed';
       if (mode === 'fixed') g.tags.forEach((t) => prev.has(t.id) && keep.add(t.id));
@@ -149,7 +160,7 @@ function randomize() {
     }
   }
   if (randomGroups === 0) {
-    return toast(tr('ランダムにするグループがありません。管理タブでグループを編集して「ランダムで選ぶ」にしてください', 'No groups are set to random. Edit a group in the Manage tab and choose "Pick at random"'), { ms: 5000 });
+    return toast(tr('ランダムにするものがありません。管理タブで、カテゴリーかグループの「編集」から「ランダム」を設定してください', 'Nothing is set to random. In the Manage tab, set "Random" in the "Edit" of a category or group'), { ms: 5000 });
   }
   // 今の作業欄のうち、カードを持たないタグと、残すカードのタグはそのまま（×で消したタグも戻さない）
   const keysOf = (ids) => new Set(ids.flatMap((id) => (findTag(id) ? splitTags(findTag(id).content).map((t) => t.key) : [])));
@@ -345,7 +356,7 @@ function refresh() {
   $('sel-title').textContent = tr(`選択中のタグ（${work.tags.length}）`, `Selected tags (${work.tags.length})`);
   updateCardSelection();
   renderChips();
-  $('output').value = joinTags(work.tags.map((t) => t.text), state.settings.separator);
+  $('output').value = withTrailingComma(joinTags(work.tags.map((t) => t.text), state.settings.separator), state.settings.separator);
 }
 
 function render() {

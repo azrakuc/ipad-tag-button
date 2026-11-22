@@ -236,7 +236,7 @@
             <li>タグの「×」で 1 つずつ削除できます。「並べ替え」でドラッグして順番を変えられます。「クリア」はすべて消します（直後に「元に戻す」が出ます）。</li>
             <li>「コピー」を押して、Draw Things などに貼り付けます。iPad の Split View で並べると、行き来せずに貼り付けられます。</li>
           </ol>
-          <p class="muted">同じタグは重複せず、1 つだけ入ります。コピーするときの区切り文字は、管理タブの「設定」で変えられます。</p>
+          <p class="muted">同じタグは重複せず、1 つだけ入ります（<code>long_hair</code> と <code>long hair</code> のように、アンダースコアとスペースの違いも同じタグとみなします）。コピーするときの区切り文字は、管理タブの「設定」で変えられます。区切りがカンマのときは、末尾にもカンマが付きます。</p>
         </details>
 
         <details class="help-sec">
@@ -249,7 +249,13 @@
                 <li><strong>対象外（選ばない）</strong>：そのグループのカードは選びません。</li>
               </ul>
             </li>
-            <li>カテゴリーの「編集」では、中のグループをまとめて設定できます。</li>
+            <li>カテゴリーの「編集」の「ランダム」では、カテゴリーごとにまとめて決められます。
+              <ul>
+                <li><strong>カテゴリー全体からランダムで選ぶ</strong>：グループ（作品など）をまたいで、カテゴリー全体から決めた数だけ選びます。例：キャラを 1 個、衣装を 1 個。グループで「対象外」にしたものは候補から外します。</li>
+                <li><strong>対象外（選ばない）</strong>：そのカテゴリーからは選びません。</li>
+                <li><strong>グループごとの設定に従う</strong>（初期値）：上のグループの設定で選びます。</li>
+              </ul>
+            </li>
             <li>作成タブで「🎲」を押すと、設定に従ってカードを選び直します。押すたびに選び直し、直後の「元に戻す」で戻せます。</li>
           </ol>
         </details>
@@ -327,7 +333,7 @@
             <li>Use "×" on a tag to remove it. "Reorder" lets you drag tags to change their order. "Clear" removes everything (an "Undo" button appears right after).</li>
             <li>Press "Copy", then paste into Draw Things or another app. Placing the apps side by side with iPad Split View lets you paste without switching back and forth.</li>
           </ol>
-          <p class="muted">The same tag is never added twice. You can change the separator used when copying in "Settings" on the Manage tab.</p>
+          <p class="muted">The same tag is never added twice (underscores and spaces are treated as the same, so <code>long_hair</code> and <code>long hair</code> count as one tag). You can change the separator used when copying in "Settings" on the Manage tab. When the separator is a comma, a comma is also added at the end.</p>
         </details>
 
         <details class="help-sec">
@@ -340,7 +346,13 @@
                 <li><strong>Excluded (pick nothing)</strong>: no cards are picked from the group.</li>
               </ul>
             </li>
-            <li>In a category's "Edit", you can set all of its groups at once.</li>
+            <li>The "Random" setting in a category's "Edit" decides for the whole category.
+              <ul>
+                <li><strong>Pick from the whole category</strong>: picks the set number of cards from the whole category, across its groups (works and so on). Example: 1 from Characters and 1 from Outfits. Groups set to "Excluded" are not picked from.</li>
+                <li><strong>Excluded (pick nothing)</strong>: nothing is picked from the category.</li>
+                <li><strong>Follow each group's setting</strong> (default): picks by the group settings above.</li>
+              </ul>
+            </li>
             <li>Press "🎲" on the Build tab to pick cards according to the settings. Each press picks again, and "Undo" right after brings back the previous selection.</li>
           </ol>
         </details>
@@ -418,21 +430,19 @@
     <input id="c-name" type="text" maxlength="100"
       autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
   </label>
-  <div id="c-random-box">
-    <label class="field">
-      <span data-en="Random settings for all groups in this category">このカテゴリーの全グループのランダム設定</span>
-      <select id="c-random">
-        <option value="keep" data-en="Don't change">変更しない</option>
-        <option value="fixed" data-en="Fixed (keep the current selection)">固定（今の選択を残す）</option>
-        <option value="random" data-en="Pick at random">ランダムで選ぶ</option>
-        <option value="off" data-en="Excluded (pick nothing)">対象外（選ばない）</option>
-      </select>
-    </label>
-    <label class="field" id="c-count-field">
-      <span data-en="How many to pick (per group)">いくつ選ぶか（グループごと）</span>
-      <input id="c-count" type="number" min="1" max="20" inputmode="numeric">
-    </label>
-  </div>
+  <label class="field">
+    <span data-en="Random (the 🎲 button on the Build tab)">ランダム（作成画面の 🎲 ボタン）</span>
+    <select id="c-random">
+      <option value="groups" data-en="Follow each group's setting">グループごとの設定に従う</option>
+      <option value="random" data-en="Pick from the whole category">カテゴリー全体からランダムで選ぶ</option>
+      <option value="off" data-en="Excluded (pick nothing)">対象外（選ばない）</option>
+    </select>
+  </label>
+  <label class="field" id="c-count-field">
+    <span data-en="How many to pick (from the whole category)">いくつ選ぶか（カテゴリー全体から）</span>
+    <input id="c-count" type="number" min="1" max="20" inputmode="numeric">
+  </label>
+  <p id="c-random-note" class="muted" data-en="Groups set to &quot;Excluded&quot; are not picked from.">グループで「対象外」にしたものは、候補から外します。</p>
   <div class="dlg-actions">
     <button id="c-del" class="btn btn-danger" type="button" data-en="Delete">削除</button>
     <span class="spacer"></span>
