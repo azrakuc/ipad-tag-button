@@ -188,6 +188,9 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .sel-cards-empty { flex: none; color: var(--muted); }
 .sel-card-name {
   flex: none;
+  max-width: 10em; /* 長い名前は「騎乗位（とても…」くらいで省略する */
+  overflow: hidden;
+  text-overflow: ellipsis;
   padding: 3px 10px;
   color: var(--text);
   background: var(--sel);

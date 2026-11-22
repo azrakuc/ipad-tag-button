@@ -255,7 +255,7 @@ function renderSelCards() {
     box.append(el('span', { className: 'sel-cards-empty', textContent: tr('選択中のカードはありません', 'No cards selected') }));
     return;
   }
-  for (const tag of tags) box.append(el('span', { className: 'sel-card-name', textContent: tag.name }));
+  for (const tag of tags) box.append(el('span', { className: 'sel-card-name', textContent: tag.name, title: tag.name }));
 }
 
 function refresh() {
