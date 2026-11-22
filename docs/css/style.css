@@ -275,6 +275,35 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 }
 .panel-title { font-size: 14px; color: var(--muted); }
 
+/* 選択中のタグ欄：見出しで開閉できる（縦画面だけ。横画面では常に開いて、見出しは押せない） */
+.sel-head { display: flex; align-items: center; gap: 8px; }
+.sel-toggle {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  font: inherit;
+  color: var(--text);
+  background: none;
+  border: 0;
+  text-align: left;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.sel-body { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.copy-mini { display: none; }
+.b-right.collapsed .sel-body { display: none; }
+.b-right.collapsed .copy-mini { display: inline-block; }
+@media (orientation: landscape) {
+  .sel-toggle { pointer-events: none; }
+  #sel-arrow { display: none; }
+  .b-right.collapsed .sel-body { display: flex; }
+  .b-right.collapsed .copy-mini { display: none; }
+}
+
 .chips {
   flex: 1;
   min-height: 56px;

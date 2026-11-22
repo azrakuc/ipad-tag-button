@@ -44,8 +44,15 @@
         <div id="cards" class="cards"></div>
         <div id="cats" class="catbar"></div>
       </div>
-      <div class="b-right">
-        <div class="panel-title" data-en="Selected tags">選択中のタグ</div>
+      <div class="b-right" id="sel-panel">
+        <div class="sel-head">
+          <button id="sel-toggle" class="sel-toggle" type="button" aria-expanded="true" aria-controls="sel-body">
+            <span id="sel-arrow" class="group-arrow">▼</span>
+            <span id="sel-title" class="panel-title">選択中のタグ</span>
+          </button>
+          <button id="copy-mini" class="btn btn-primary copy-mini" type="button" data-en="Copy">コピー</button>
+        </div>
+        <div id="sel-body" class="sel-body">
         <div id="chips" class="chips"></div>
         <textarea id="output" class="output" rows="3" readonly
           autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
@@ -54,6 +61,7 @@
           <button id="reorder-btn" class="btn" type="button" aria-pressed="false" data-en="Reorder">並べ替え</button>
           <button id="clear-btn" class="btn" type="button" data-en="Clear">クリア</button>
           <button id="copy-btn" class="btn btn-primary btn-wide" type="button" data-en="Copy">コピー</button>
+        </div>
         </div>
       </div>
     </section>
@@ -213,6 +221,7 @@
             <li>下のカテゴリーボタンで、カテゴリーを選びます。</li>
             <li>カードをタップすると、そのカードのタグが右（縦画面では下）の「選択中のタグ」に集まります。もう一度タップすると外れます。</li>
             <li>カードを長押しすると、タグの内容を表示します。</li>
+            <li>縦画面では「選択中のタグ」の見出しをタップすると、欄を折りたたんで、カードを選ぶ場所を広げられます。折りたたんでいる間も、見出しの横の「コピー」でコピーできます。</li>
             <li>タグの「×」で 1 つずつ削除できます。「並べ替え」でドラッグして順番を変えられます。「クリア」はすべて消します（直後に「元に戻す」が出ます）。</li>
             <li>「コピー」を押して、Draw Things などに貼り付けます。iPad の Split View で並べると、行き来せずに貼り付けられます。</li>
           </ol>
@@ -287,6 +296,7 @@
             <li>Pick a category with the buttons at the bottom.</li>
             <li>Tap a card and its tags are collected in "Selected tags" on the right (below on a portrait screen). Tap it again to remove them.</li>
             <li>Press and hold a card to see the content of its tags.</li>
+            <li>On a portrait screen, tap the "Selected tags" heading to collapse the panel and make more room for the cards. While it is collapsed, you can still copy with the "Copy" button next to the heading.</li>
             <li>Use "×" on a tag to remove it. "Reorder" lets you drag tags to change their order. "Clear" removes everything (an "Undo" button appears right after).</li>
             <li>Press "Copy", then paste into Draw Things or another app. Placing the apps side by side with iPad Split View lets you paste without switching back and forth.</li>
           </ol>
