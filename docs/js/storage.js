@@ -132,12 +132,10 @@ async function set(key, value) {
   });
 }
 
+// 読み込みや形式の確認に失敗したら、例外を投げる。
+// （空のデータとして起動すると、次の保存で元のデータを上書きして消してしまうため。state.js が保存を止める）
 export async function loadCategories() {
-  try {
-    return normalizeCategories(await get('categories', [])).categories;
-  } catch {
-    return [];
-  }
+  return normalizeCategories(await get('categories', [])).categories;
 }
 
 export const saveCategories = (categories) => set('categories', categories);

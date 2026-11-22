@@ -45,8 +45,21 @@ python -m http.server 8000
 
 `http://localhost:8000/` で開けます（Service Worker は localhost でも動きます）。
 
-- ファイルを変更したら、[docs/sw.js](docs/sw.js) の `CACHE` の版（現在 `itb-v21`）を上げてください。上げないと、キャッシュ済みの古いファイルが使われ続けます。
+- `docs/` のファイルを変更したら、`npm run bump` を実行してください。[docs/sw.js](docs/sw.js) のキャッシュ版（現在 `itb-v23`）が上がります。上げないと、iPhone / iPad でキャッシュ済みの古いファイルが使われ続けます。
 - ファイルを追加したら、`sw.js` の `ASSETS` にも追加してください。
+
+### テスト
+
+```text
+npm install      # 初回だけ（Playwright）。ブラウザが無ければ npx playwright install chromium
+npm test         # すべて（単体テスト ＋ 画面のテスト）
+npm run test:unit
+npm run test:e2e
+```
+
+- `tests/unit/`：ブラウザを使わないテスト（画像のメタデータ、タグの分割と重複判定、データの検証とマージ、ランダム、Service Worker の版の上げ忘れ）。
+- `tests/e2e/`：Playwright で画面を操作するテスト（作成・管理・画像・英語表示・画面の幅・CSP・データの保護）。
+- `docs/` を変えたのに `npm run bump` をしていないと、`tests/unit/sw.test.mjs` が失敗して知らせます。
 
 ## 外部ライブラリ
 

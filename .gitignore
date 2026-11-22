@@ -5,3 +5,7 @@ tag-button-backup-*.json
 .DS_Store
 Thumbs.db
 .vscode/
+
+# 開発用
+node_modules/
+test-results/

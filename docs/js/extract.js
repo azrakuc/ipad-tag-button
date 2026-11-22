@@ -5,6 +5,7 @@ import { splitTags, splitSentences, splitByMode, joinerFor } from './tags.js';
 import { resizeImage } from './image.js';
 import { readPrompt, noPromptMessage } from './metadata.js';
 import { tr, onLang } from './i18n.js';
+import { loadText, saveText, loadJSON, saveJSON } from './store.js';
 import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
 const SOURCE_KEY = 'itb:extractSource';
@@ -19,34 +20,18 @@ let incoming = null;     // 置き換え確認の待ち：{ text, file }
 let registered = null;   // 登録済みタグのキー（キャッシュ）
 let chipTimer;
 
-function saveSource() {
-  try {
-    localStorage.setItem(SOURCE_KEY, $('x-source').value);
-  } catch {
-    // 保存できなくても動作には影響しない
-  }
-}
+const saveSource = () => saveText(SOURCE_KEY, $('x-source').value);
 
 // ③の入力中の内容を端末に保存する。再読み込みやアプリの切り替えで消えないようにするため。
-function saveDraft() {
-  try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ name: $('x-name').value, content: $('x-content').value, thumb }));
-  } catch {
-    // 保存できなくても動作には影響しない（サムネイルが大きすぎるときなど）
-  }
-}
+const saveDraft = () => saveJSON(DRAFT_KEY, { name: $('x-name').value, content: $('x-content').value, thumb });
 
 function loadDraft() {
-  try {
-    const d = JSON.parse(localStorage.getItem(DRAFT_KEY));
-    if (!d || typeof d !== 'object') return;
-    if (typeof d.name === 'string') $('x-name').value = d.name.slice(0, LIMITS.name);
-    if (typeof d.content === 'string') $('x-content').value = d.content.slice(0, LIMITS.content);
-    // 自分で縮小した画像だけを戻す（data:image/ で始まるもの）
-    if (typeof d.thumb === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/.test(d.thumb)) setThumb(d.thumb, false);
-  } catch {
-    // 読めなくても動作には影響しない
-  }
+  const d = loadJSON(DRAFT_KEY, null);
+  if (!d || typeof d !== 'object') return;
+  if (typeof d.name === 'string') $('x-name').value = d.name.slice(0, LIMITS.name);
+  if (typeof d.content === 'string') $('x-content').value = d.content.slice(0, LIMITS.content);
+  // 自分で縮小した画像だけを戻す（data:image/ で始まるもの）
+  if (typeof d.thumb === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/.test(d.thumb)) setThumb(d.thumb, false);
 }
 
 function registeredKeys() {
@@ -234,11 +219,7 @@ async function appendTo(tag) {
 // hooks.getTarget：管理画面で選択中の { cat, group } を返す。
 export function init(hooks) {
   getTarget = hooks.getTarget;
-  try {
-    $('x-source').value = (localStorage.getItem(SOURCE_KEY) || '').slice(0, MAX_SOURCE);
-  } catch {
-    // 読めなくても動作には影響しない
-  }
+  $('x-source').value = loadText(SOURCE_KEY).slice(0, MAX_SOURCE);
 
   loadDraft();
 

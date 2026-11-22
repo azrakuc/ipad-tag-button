@@ -94,6 +94,7 @@ html, body {
   padding: 8px 12px;
   background: var(--sel);
 }
+.banner-error { color: var(--danger); font-size: 14px; }
 
 .btn {
   min-height: 44px;

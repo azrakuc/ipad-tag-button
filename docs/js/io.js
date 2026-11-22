@@ -19,6 +19,11 @@ function makeFile() {
   return new File([json], `tag-button-backup-${today()}.json`, { type: 'application/json' });
 }
 
+// iPhone / iPad（とくにホーム画面に追加したアプリ）では、リンクからのファイル保存がうまく動かないことがあるため、
+// 共有シート（「ファイルに保存」など）を使う。
+export const isIOS = () =>
+  /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
 export function download() {
   const file = makeFile();
   const url = URL.createObjectURL(file);
@@ -29,19 +34,26 @@ export function download() {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 10000);
-  return updateMeta({ lastExportedAt: new Date().toISOString() });
+  return updateMeta({ lastExportedAt: new Date().toISOString() }).then(() => true);
 }
 
 export const canShare = () => !!(navigator.canShare && navigator.canShare({ files: [makeFile()] }));
 
+// 共有シートで保存する。保存したら true、キャンセルしたら false。
 export async function share() {
   try {
     await navigator.share({ files: [makeFile()] });
-    await updateMeta({ lastExportedAt: new Date().toISOString() });
   } catch (e) {
-    if (e.name !== 'AbortError') throw e;
+    if (e.name === 'AbortError') return false;
+    throw e;
   }
+  await updateMeta({ lastExportedAt: new Date().toISOString() });
+  return true;
 }
+
+// バックアップを書き出す。iPhone / iPad で共有できるときは共有シート、それ以外はファイルのダウンロード。
+// 書き出したら true、キャンセルしたら false（失敗したら例外）。
+export const exportBackup = () => (isIOS() && canShare() ? share() : download());
 
 // ファイルを読んで検証する。不正なら例外を投げる（データは一切変更しない）。
 export async function parseFile(file) {
