@@ -119,7 +119,14 @@ async function renderSettings() {
   }
 }
 
+let dirty = false;
+
 function render() {
+  if ($('view-manager').hidden) {
+    dirty = true; // 管理画面を開いたときに描く（show を参照）
+    return;
+  }
+  dirty = false;
   if (!selCat()) selCatId = state.categories[0]?.id ?? null;
   if (!selGroup()) selGroupId = selCat()?.groups[0]?.id ?? null;
   renderCats();
@@ -336,7 +343,20 @@ async function applyImport(mode) {
   pending = null;
   $('dlg-import').close();
   if (mode === 'replace') {
-    if (state.categories.length > 0) await IO.download();
+    // 置き換える前に、今のデータを書き出す。書き出せなかったとき（キャンセル・失敗）は、続けるか確かめる。
+    if (state.categories.length > 0 && !state.readOnly) {
+      let saved = false;
+      try {
+        saved = await IO.exportBackup();
+      } catch {
+        saved = false;
+      }
+      const msg = saved
+        ? tr('今のデータのバックアップを書き出しました。保存できたことを確かめてから、置き換えてください。\n\n今のデータを置き換えますか？', 'A backup of your current data has been exported. Make sure it was saved before replacing.\n\nReplace your current data?')
+        : tr('バックアップを書き出せませんでした（またはキャンセルしました）。\n\nバックアップなしで、今のデータを置き換えますか？', 'The backup could not be exported (or was cancelled).\n\nReplace your current data without a backup?');
+      if (!confirm(msg)) return toast(tr('置き換えをやめました', 'Replace cancelled'));
+    }
+    state.readOnly = false; // 意図して全部を置き換えるので、保存の停止を解除する
     state.categories = data.categories;
     selCatId = null;
     selGroupId = null;
@@ -361,6 +381,11 @@ function sortable(id, getList) {
       await commit();
     },
   });
+}
+
+// 管理画面を表示したときに呼ぶ。隠れているあいだに変わっていれば描き直す。
+export function show() {
+  if (dirty) render();
 }
 
 export function init() {
@@ -411,8 +436,13 @@ export function init() {
   $('s-separator').addEventListener('change', () => updateSettings({ separator: SEPARATORS[$('s-separator').value] }));
   $('s-order').addEventListener('change', () => updateSettings({ tagOrder: $('s-order').value === 'tap' ? 'tap' : 'group' }));
 
-  $('d-export').addEventListener('click', () => IO.download().then(() => toast(tr('エクスポートしました', 'Exported'))));
-  if (IO.canShare()) {
+  $('d-export').addEventListener('click', () =>
+    IO.exportBackup()
+      .then((ok) => ok && toast(tr('エクスポートしました', 'Exported')))
+      .catch((e) => toast(tr('エクスポートできませんでした：', 'Could not export: ') + e.message, { ms: 4000 })),
+  );
+  // iPhone / iPad では「エクスポート」が共有シートを使うので、別の「共有…」ボタンは出さない
+  if (IO.canShare() && !IO.isIOS()) {
     $('d-share').hidden = false;
     $('d-share').addEventListener('click', () => IO.share().catch((e) => toast(tr('共有できませんでした：', 'Could not share: ') + e.message)));
   }

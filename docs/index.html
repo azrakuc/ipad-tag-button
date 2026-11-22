@@ -32,6 +32,10 @@
     </nav>
   </header>
 
+  <div id="load-error" class="banner banner-error" role="alert" hidden>
+    <span id="load-error-text" class="pre"></span>
+  </div>
+
   <div id="update-banner" class="banner" hidden>
     <span data-en="A new version is available.">新しい版があります。</span>
     <button id="update-btn" class="btn btn-primary" type="button" data-en="Update">更新する</button>
@@ -296,7 +300,8 @@
           <summary>ホーム画面への追加とバックアップ</summary>
           <ul>
             <li>Safari の共有ボタン →「ホーム画面に追加」で、アプリのように使えます。追加しないと、しばらく使わないときに、Safari が登録データを消すことがあります。</li>
-            <li>登録したデータは、この端末の中だけに保存されます。端末の変更や、データが消えたときに備えて、管理タブの「エクスポート」で、定期的に JSON ファイルを保存してください。「インポート」で戻せます。</li>
+            <li>登録したデータは、この端末の中だけに保存されます。端末の変更や、データが消えたときに備えて、管理タブの「エクスポート」で、定期的に JSON ファイルを保存してください。iPhone / iPad では共有シートが開くので、「“ファイル”に保存」を選びます。「インポート」で戻せます。</li>
+            <li>「全置換」でインポートするときは、先に今のデータを書き出し、保存できたか確かめてから置き換えます。</li>
             <li>「新しい版があります」と出たら、「更新する」を押してください。</li>
           </ul>
         </details>
@@ -393,7 +398,8 @@
           <summary>Add to Home Screen and back up</summary>
           <ul>
             <li>In Safari, tap Share &rarr; "Add to Home Screen" to use it like an app. If you don't, Safari may delete your registered data after a period of not using it.</li>
-            <li>Your data is stored only on this device. To prepare for changing devices or losing data, use "Export" on the Manage tab to save a JSON file regularly. You can restore it with "Import".</li>
+            <li>Your data is stored only on this device. To prepare for changing devices or losing data, use "Export" on the Manage tab to save a JSON file regularly. On iPhone / iPad, the share sheet opens; choose "Save to Files". You can restore it with "Import".</li>
+            <li>When importing with "Replace all", your current data is exported first, and you are asked to confirm it was saved before it is replaced.</li>
             <li>When "A new version is available" appears, press "Update".</li>
           </ul>
         </details>

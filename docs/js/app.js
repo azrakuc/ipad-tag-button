@@ -1,7 +1,7 @@
 // 起動、画面の切り替え、Service Worker の登録。
-import { init as initState } from './state.js';
-import { init as initBuilder } from './builder.js';
-import { init as initManager } from './manager.js';
+import { init as initState, state, readOnlyMessage } from './state.js';
+import { init as initBuilder, show as showBuilder } from './builder.js';
+import { init as initManager, show as showManager } from './manager.js';
 import { init as initImage } from './imageview.js';
 import { receive } from './extract.js';
 import { $, initModeSelects } from './ui.js';
@@ -9,8 +9,12 @@ import { init as initLang, tr } from './i18n.js';
 
 const VIEWS = ['builder', 'manager', 'image', 'help'];
 
+const ON_SHOW = { builder: () => showBuilder(), manager: () => showManager() };
+let ready = false; // 初期化が終わるまでは、表示の切り替えで描かない
+
 function showView(name) {
   for (const v of VIEWS) $(`view-${v}`).hidden = v !== name;
+  if (ready) ON_SHOW[name]?.();
   for (const tab of document.querySelectorAll('.tab')) {
     const on = tab.dataset.view === name;
     tab.classList.toggle('active', on);
@@ -68,6 +72,13 @@ async function main() {
       receive(text, file);
     },
   });
+  ready = true;
+  showBuilder();
+  // 登録データを読み込めなかったときは、知らせる（保存は state.js が止めている）
+  if (state.readOnly) {
+    $('load-error').hidden = false;
+    $('load-error-text').textContent = readOnlyMessage() + (state.loadError ? `\n(${state.loadError})` : '');
+  }
 }
 
 main();

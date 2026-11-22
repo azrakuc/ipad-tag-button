@@ -2,16 +2,14 @@
 // コードの中の文字は tr('日本語', 'English') で書く。HTML の固定文字は data-en 系の属性に英語を持たせる。
 // （ユーザーのデータではなく、このアプリ自身の固定の文字だけを扱う）
 
+import { loadText, saveText } from './store.js';
+
 const KEY = 'itb:lang';
 const LANGS = ['ja', 'en'];
 
 function detect() {
-  try {
-    const saved = localStorage.getItem(KEY);
-    if (LANGS.includes(saved)) return saved;
-  } catch {
-    // 読めなくても動作には影響しない
-  }
+  const saved = typeof localStorage === 'undefined' ? '' : loadText(KEY);
+  if (LANGS.includes(saved)) return saved;
   const nav = typeof navigator !== 'undefined' ? String(navigator.language || '') : '';
   return nav.toLowerCase().startsWith('ja') ? 'ja' : 'en';
 }
@@ -50,11 +48,7 @@ function applyStatic() {
 export function setLang(next) {
   if (!LANGS.includes(next) || next === lang) return;
   lang = next;
-  try {
-    localStorage.setItem(KEY, lang);
-  } catch {
-    // 保存できなくても動作には影響しない
-  }
+  saveText(KEY, lang);
   applyStatic();
   listeners.forEach((fn) => fn());
 }

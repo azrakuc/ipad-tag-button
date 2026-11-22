@@ -3,6 +3,8 @@ import { state, onChange, findTag, catTags } from './state.js';
 import { splitTags, joinTags, normKey, withTrailingComma } from './tags.js';
 import { $, el, toast } from './ui.js';
 import { tr, onLang } from './i18n.js';
+import { loadText, saveText, loadJSON, saveJSON } from './store.js';
+import { planRandom } from './random.js';
 
 const WORK_KEY = 'itb:work';
 const LAST_KEY = 'itb:lastCategory';
@@ -12,42 +14,28 @@ const LONG_PRESS_MS = 500;
 
 // 作業中の状態：work.tags = 並び順どおりのタグ [{ key, text }]、work.selected = 選択中のカード ID
 let work = loadWork();
-let currentCat = localStorage.getItem(LAST_KEY);
+let currentCat = loadText(LAST_KEY, null);
 let reorder = false;
 let collapsed = loadCollapsed();
 let chipSorter;
 
 function loadWork() {
-  try {
-    const w = JSON.parse(localStorage.getItem(WORK_KEY));
-    // 比べ方（normKey）が変わっても重複しないよう、キーを作り直して重複を消す
-    const seen = new Set();
-    const tags = (Array.isArray(w?.tags) ? w.tags : [])
-      .filter((t) => t && typeof t.text === 'string' && t.text.trim())
-      .map((t) => ({ key: normKey(t.text), text: t.text }))
-      .filter((t) => !seen.has(t.key) && seen.add(t.key));
-    const selected = Array.isArray(w?.selected) ? w.selected.filter((s) => typeof s === 'string') : [];
-    return { tags, selected };
-  } catch {
-    return { tags: [], selected: [] };
-  }
+  const w = loadJSON(WORK_KEY, null);
+  // 比べ方（normKey）が変わっても重複しないよう、キーを作り直して重複を消す
+  const seen = new Set();
+  const tags = (Array.isArray(w?.tags) ? w.tags : [])
+    .filter((t) => t && typeof t.text === 'string' && t.text.trim())
+    .map((t) => ({ key: normKey(t.text), text: t.text }))
+    .filter((t) => !seen.has(t.key) && seen.add(t.key));
+  const selected = Array.isArray(w?.selected) ? w.selected.filter((s) => typeof s === 'string') : [];
+  return { tags, selected };
 }
 
-function saveWork() {
-  try {
-    localStorage.setItem(WORK_KEY, JSON.stringify(work));
-  } catch {
-    // 保存できなくても動作には影響しない
-  }
-}
+const saveWork = () => saveJSON(WORK_KEY, work);
 
 function loadCollapsed() {
-  try {
-    const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY));
-    return new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
-  } catch {
-    return new Set();
-  }
+  const v = loadJSON(COLLAPSED_KEY, []);
+  return new Set(Array.isArray(v) ? v.filter((x) => typeof x === 'string') : []);
 }
 
 const hasKey = (key) => work.tags.some((t) => t.key === key);
@@ -121,45 +109,11 @@ export function addToWork(items) {
   return added;
 }
 
-// --- ランダム ---
-// グループごとの設定に従って、カードを選び直す。
-//   固定（既定）：今選んでいるカードを残す（無ければ何も入れない）
-//   ランダム   ：そのグループの中から count 枚を選び直す
-//   対象外     ：そのグループのカードは選ばない（選択中でも外す）
-function pickRandom(list, n) {
-  const a = [...list];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a.slice(0, Math.min(n, a.length));
-}
-
+// --- ランダム ---（どれを選ぶかは random.js が決める）
 function randomize() {
   const before = { tags: [...work.tags], selected: [...work.selected] };
-  const prev = new Set(work.selected);
-  const keep = new Set();
-  const picked = [];
-  let randomGroups = 0;
-  for (const cat of state.categories) {
-    // カテゴリーの設定が先：全体から選ぶ（対象外のグループは除く）／対象外／グループごと
-    if (cat.random?.mode === 'off') continue;
-    if (cat.random?.mode === 'random') {
-      randomGroups++;
-      const pool = cat.groups.filter((g) => g.random?.mode !== 'off').flatMap((g) => g.tags);
-      picked.push(...pickRandom(pool, cat.random.count).map((t) => t.id));
-      continue;
-    }
-    for (const g of cat.groups) {
-      const mode = g.random?.mode || 'fixed';
-      if (mode === 'fixed') g.tags.forEach((t) => prev.has(t.id) && keep.add(t.id));
-      else if (mode === 'random') {
-        randomGroups++;
-        picked.push(...pickRandom(g.tags, g.random.count).map((t) => t.id));
-      }
-    }
-  }
-  if (randomGroups === 0) {
+  const { keep, picked, units } = planRandom(state.categories, work.selected);
+  if (units === 0) {
     return toast(tr('ランダムにするものがありません。管理タブで、カテゴリーかグループの「編集」から「ランダム」を設定してください', 'Nothing is set to random. In the Manage tab, set "Random" in the "Edit" of a category or group'), { ms: 5000 });
   }
   // 今の作業欄のうち、カードを持たないタグと、残すカードのタグはそのまま（×で消したタグも戻さない）
@@ -205,7 +159,7 @@ function renderCats() {
     });
     btn.addEventListener('click', () => {
       currentCat = cat.id;
-      localStorage.setItem(LAST_KEY, cat.id);
+      saveText(LAST_KEY, cat.id);
       renderCats();
       renderCards();
       $('cards').scrollTop = 0;
@@ -276,11 +230,7 @@ function renderCards() {
       head.firstChild.textContent = nowOpen ? '▼' : '▶';
       if (nowOpen) collapsed.delete(group.id);
       else collapsed.add(group.id);
-      try {
-        localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]));
-      } catch {
-        // 保存できなくても動作には影響しない
-      }
+      saveJSON(COLLAPSED_KEY, [...collapsed]);
     });
     box.append(el('section', { className: 'group' }, [head, grid]));
   }
@@ -314,13 +264,7 @@ function renderChips() {
 }
 
 // 選択中のタグ欄の開閉。縦画面ではカードを選ぶ場所を広げるために折りたためる（横画面では常に開く）。
-let selCollapsed = (() => {
-  try {
-    return localStorage.getItem(SEL_COLLAPSED_KEY) === '1';
-  } catch {
-    return false;
-  }
-})();
+let selCollapsed = loadText(SEL_COLLAPSED_KEY) === '1';
 
 function applySelCollapsed() {
   $('sel-panel').classList.toggle('collapsed', selCollapsed);
@@ -331,11 +275,7 @@ function applySelCollapsed() {
 function toggleSel() {
   selCollapsed = !selCollapsed;
   if (selCollapsed && reorder) setReorder(false);
-  try {
-    localStorage.setItem(SEL_COLLAPSED_KEY, selCollapsed ? '1' : '0');
-  } catch {
-    // 保存できなくても動作には影響しない
-  }
+  saveText(SEL_COLLAPSED_KEY, selCollapsed ? '1' : '0');
   applySelCollapsed();
 }
 
@@ -359,7 +299,14 @@ function refresh() {
   $('output').value = withTrailingComma(joinTags(work.tags.map((t) => t.text), state.settings.separator), state.settings.separator);
 }
 
+let dirty = false;
+
 function render() {
+  if ($('view-builder').hidden) {
+    dirty = true; // 作成画面に戻ったときに描く（show を参照）
+    return;
+  }
+  dirty = false;
   if (!state.categories.some((c) => c.id === currentCat)) currentCat = state.categories[0]?.id ?? null;
   pruneSelected();
   sortWork(); // 管理画面で並べ替えたときや、設定を「グループの順」にしたときに追従する
@@ -409,6 +356,11 @@ function setReorder(on) {
   $('chips').classList.toggle('reorder', on);
   $('reorder-btn').setAttribute('aria-pressed', String(on));
   $('reorder-btn').textContent = on ? tr('並べ替え終了', 'Done reordering') : tr('並べ替え', 'Reorder');
+}
+
+// 作成画面を表示したときに呼ぶ。隠れているあいだに変わっていれば描き直す。
+export function show() {
+  if (dirty) render();
 }
 
 export function init() {
