@@ -6,7 +6,7 @@ import { init as initImage } from './imageview.js';
 import { receive } from './extract.js';
 import { $, initModeSelects } from './ui.js';
 
-const VIEWS = ['builder', 'manager', 'image'];
+const VIEWS = ['builder', 'manager', 'image', 'help'];
 
 function showView(name) {
   for (const v of VIEWS) $(`view-${v}`).hidden = v !== name;

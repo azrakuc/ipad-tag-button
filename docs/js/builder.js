@@ -155,7 +155,7 @@ function renderCards() {
   const box = $('cards');
   box.replaceChildren();
   if (state.categories.length === 0) {
-    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。上の「管理」タブでカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。' }));
+    box.append(el('p', { className: 'empty', textContent: 'カテゴリーがありません。上の「管理」タブでカテゴリー・グループ・タグを登録するか、JSON を読み込んでください。使い方は「説明」タブにあります。' }));
     return;
   }
   const cat = state.categories.find((c) => c.id === currentCat);
