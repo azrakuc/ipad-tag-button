@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://gc.zgo.at; img-src 'self' data: blob: https://azrakuc.goatcounter.com; connect-src 'self' https://azrakuc.goatcounter.com; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Tag Button">
@@ -304,6 +304,8 @@
   </div>
 </dialog>
 
+<!-- アクセス解析（GoatCounter）：ページを開いた事実だけを送る。タグ・プロンプト・画像は送らない。止めるときはこの行を消す。 -->
+<script data-goatcounter="https://azrakuc.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <script src="vendor/Sortable.min.js"></script>
 <script type="module" src="js/app.js"></script>
 </body>

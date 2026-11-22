@@ -28,7 +28,7 @@
 | 動作環境 | iPad Safari（iPadOS 16 以降）、ホーム画面に追加した PWA |
 | 保存先 | IndexedDB（カテゴリー・タグ・設定）、localStorage（作業中のプロンプト） |
 | 配信 | GitHub Pages（HTTPS）。サーバーにデータは送らない |
-| 通信 | 初回読み込み後は不要（Service Worker でオフライン動作） |
+| 通信 | 初回読み込み後は不要（Service Worker でオフライン動作）。アクセス解析（GoatCounter）への送信だけを例外とする（9.1、9.2、14 章） |
 
 ### 1.1 配信方法
 
@@ -297,24 +297,25 @@ GitHub Pages ──(アプリのファイルだけを配る)──▶ iPad Safar
                                                 └ IndexedDB（iPad 内）← 登録データはここだけ
 ```
 
-- **登録データ（カテゴリー・タグ・サムネイル・設定）は iPad の外に送らない。** アプリには送信処理を一切書かない。
+- **登録データ（カテゴリー・タグ・サムネイル・設定）は iPad の外に送らない。** アプリには、データの送信処理を一切書かない。外へ出る通信は、アクセス解析（GoatCounter）が送る「ページを開いた」という情報だけ（14 章）。
 - GitHub のサーバーからは、iPad 内の IndexedDB は読めない。GitHub に置くのはアプリのコードだけ。
-- 外部のサーバー、CDN、アクセス解析、Web フォントは使わない。必要なファイルはすべてリポジトリの中に入れる。
+- 外部のサーバー、CDN、Web フォントは使わない。必要なファイルはすべてリポジトリの中に入れる。アクセス解析は GoatCounter だけを使う（14 章）。
 
-### 9.2 CSP（外部への通信を禁止する設定）
+### 9.2 CSP（外部への通信を、自分のサイトと GoatCounter だけに限る設定）
 
 GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` に `<meta>` で CSP を入れる。
 
 ```html
 <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  content="default-src 'self'; script-src 'self' https://gc.zgo.at; img-src 'self' data: blob: https://azrakuc.goatcounter.com; connect-src 'self' https://azrakuc.goatcounter.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 ```
 
 | 指定 | 意味 |
 | --- | --- |
-| `default-src 'self'` | スクリプト、CSS、Service Worker、manifest は、自分のサイトのファイルだけ読み込める |
-| `img-src 'self' data: blob:` | 画像は、自分のファイルと、サムネイル（data URL）、選んだ画像のプレビュー（blob URL）だけ表示できる |
-| `connect-src 'self'` | `fetch` などの通信先を自分のサイトだけにする。**万一コードに問題があっても、外部へは送れない** |
+| `default-src 'self'` | CSS、Service Worker、manifest は、自分のサイトのファイルだけ読み込める |
+| `script-src 'self' https://gc.zgo.at` | スクリプトは、自分のサイトのファイルと、GoatCounter の `count.js` だけ読み込める |
+| `img-src 'self' data: blob: https://azrakuc.goatcounter.com` | 画像は、自分のファイルと、サムネイル（data URL）、選んだ画像のプレビュー（blob URL）、GoatCounter の計測用画像だけ表示できる |
+| `connect-src 'self' https://azrakuc.goatcounter.com` | `fetch` などの通信先を、自分のサイトと GoatCounter だけにする。**万一コードに問題があっても、それ以外の外部へは送れない** |
 | `object-src 'none'` / `base-uri 'none'` / `form-action 'none'` | プラグイン、基準 URL の書き換え、フォームの送信を禁止する |
 
 この CSP を守るため、実装では次のルールを守る。
@@ -385,7 +386,7 @@ GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` 
 - iPad 版でエクスポートした JSON を、元の拡張機能で読み込める（グループは失われる）。
 - アプリを開き直しても、データと作業中のプロンプトが残っている。
 - <https://azrakuc.github.io/ipad-tag-button/> で公開され、ホーム画面に追加して使える。
-- Safari の開発ツール（Mac の Safari に iPad をつないで確認する）で、CSP の違反がなく、外部への通信が 1 件もない。
+- Safari の開発ツール（Mac の Safari に iPad をつないで確認する）で、CSP の違反がなく、外部への通信が自分のサイトと GoatCounter（ページを開いたときの計測だけ）以外にない。
 - `<script>alert(1)</script>` を名前に入れた JSON や、SVG のサムネイルを入れた JSON を読み込んでも、スクリプトが動かない。
 
 ---
@@ -548,7 +549,7 @@ iPad では、画像が届くまでの経路でメタデータが消える可能
 
 ### 13.5 セキュリティ（9 章への追加）
 
-- 画像は iPad の中で読むだけで、どこにも送らない。CSP は変えない（`connect-src 'self'` のままで動く）。
+- 画像は iPad の中で読むだけで、どこにも送らない。GoatCounter に送るのは「ページを開いた」という情報だけで、画像や読み取った文字は含まれない（14 章）。
 - 画像のプレビューは blob URL で表示する（`img-src` で許可済み）。使い終わったら `URL.revokeObjectURL` で解放する。
 - 取り出した文字はすべて `textContent` で表示する。
 - クリップボードは書き込みだけを使う（9.7 のとおり）。
@@ -579,7 +580,7 @@ docs/js/
 - Draw Things と A1111 系で生成した画像から、ポジティブとネガティブを取り出せる。
 - 画像画面から作業欄への追加と、「管理で切り出す」ができる。
 - メタデータのない画像では、案内が表示される。
-- 画像を読み込んでも、外部への通信が 1 件もない。
+- 画像を読み込んでも、新しい外部への通信が発生しない（GoatCounter への送信は、ページを開いたときだけ）。
 
 ### 13.9 決定事項
 
@@ -589,3 +590,26 @@ docs/js/
 | 2 | 切り出す単位 | チップ式（カンマなどで分けたタグをタップで選ぶ） |
 | 3 | 登録先 | 上のリストで選択中のグループ |
 | 4 | 画像からの読み取り | 専用の画像画面を作り、「管理で切り出す」で管理画面に送る（案 A）。管理画面の①にも「画像から」を付ける |
+
+---
+
+## 14. アクセス解析（GoatCounter）
+
+### 14.1 目的
+
+アプリが使われているかを知り、おかしなアクセスの増え方に気づくため。**数えるだけで、アクセスを止める機能はない。** 異常があったときは、解析のタグを外すか、GitHub Pages の公開を止める。
+
+### 14.2 仕様
+
+- 使うのは [GoatCounter](https://www.goatcounter.com/) だけ。送信先は `https://azrakuc.goatcounter.com`。
+- `index.html` に、次の 1 行を置く（`<script>` の中に JS は書かない。CSP に合う）。
+
+```html
+<script data-goatcounter="https://azrakuc.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+```
+
+- 送られるのは、ページを開いたことと、ページの URL、参照元、画面の大きさ、ブラウザの種類など。Cookie は使わない。
+- **送らないもの**：登録したカテゴリー・グループ・タグ・サムネイル、作業中のプロンプト、読み込んだ画像と、そこから取り出した文字。
+- 解析が使えない（オフラインなど）ときも、アプリは普通に動く。
+- 自分の端末を数えないときは、`#toggle-goatcounter` を付けた URL を一度開く。
+- 止めるときは、`index.html` のこの 1 行を消し、CSP から `gc.zgo.at` と `azrakuc.goatcounter.com` を外す。
