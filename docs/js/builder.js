@@ -1,6 +1,6 @@
 // 作成画面：タグカードをタップしてプロンプトを組み立てる。
 import { state, onChange, findTag, catTags } from './state.js';
-import { splitTags, joinTags } from './tags.js';
+import { splitTags, joinTags, normKey, withTrailingComma } from './tags.js';
 import { $, el, toast } from './ui.js';
 import { tr, onLang } from './i18n.js';
 
@@ -20,9 +20,12 @@ let chipSorter;
 function loadWork() {
   try {
     const w = JSON.parse(localStorage.getItem(WORK_KEY));
-    const tags = Array.isArray(w?.tags)
-      ? w.tags.filter((t) => t && typeof t.key === 'string' && typeof t.text === 'string')
-      : [];
+    // 比べ方（normKey）が変わっても重複しないよう、キーを作り直して重複を消す
+    const seen = new Set();
+    const tags = (Array.isArray(w?.tags) ? w.tags : [])
+      .filter((t) => t && typeof t.text === 'string' && t.text.trim())
+      .map((t) => ({ key: normKey(t.text), text: t.text }))
+      .filter((t) => !seen.has(t.key) && seen.add(t.key));
     const selected = Array.isArray(w?.selected) ? w.selected.filter((s) => typeof s === 'string') : [];
     return { tags, selected };
   } catch {
@@ -353,7 +356,7 @@ function refresh() {
   $('sel-title').textContent = tr(`選択中のタグ（${work.tags.length}）`, `Selected tags (${work.tags.length})`);
   updateCardSelection();
   renderChips();
-  $('output').value = joinTags(work.tags.map((t) => t.text), state.settings.separator);
+  $('output').value = withTrailingComma(joinTags(work.tags.map((t) => t.text), state.settings.separator), state.settings.separator);
 }
 
 function render() {
