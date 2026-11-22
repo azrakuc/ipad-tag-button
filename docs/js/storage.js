@@ -35,6 +35,7 @@ function normalizeTag(raw, seenIds, counts) {
   return { id, name: raw.name, content: raw.content, thumbnail };
 }
 
+// グループとカテゴリーのランダム設定（カテゴリーでは「ランダム」＝カテゴリー全体から count 枚、持たない＝グループごとの設定に従う）。
 // グループのランダム設定。既定の「固定」（今の選択を残す）のときは持たない。
 //   { mode: 'random', count: 1〜RANDOM_MAX } … ランダムで count 枚選ぶ
 //   { mode: 'off' }                         … 対象外（選ばない。選択中のカードも外す）
@@ -93,7 +94,8 @@ export function normalizeCategories(data) {
       const random = normalizeRandom(g.random);
       groups.push(random ? { id: groupId, name: g.name, tags, random } : { id: groupId, name: g.name, tags });
     }
-    categories.push({ id: catId, categoryName: c.categoryName, groups });
+    const catRandom = normalizeRandom(c.random);
+    categories.push(catRandom ? { id: catId, categoryName: c.categoryName, groups, random: catRandom } : { id: catId, categoryName: c.categoryName, groups });
   }
   return { categories, skippedCategories, skippedGroups, skippedTags };
 }

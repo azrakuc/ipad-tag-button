@@ -80,7 +80,7 @@ export function mergeAppend(current, imported) {
   for (const inc of imported) {
     let cat = result.find((c) => c.categoryName === inc.categoryName);
     if (!cat) {
-      cat = { id: fresh(inc.id), categoryName: inc.categoryName, groups: [] };
+      cat = { id: fresh(inc.id), categoryName: inc.categoryName, groups: [], ...(inc.random ? { random: inc.random } : {}) };
       result.push(cat);
     }
     for (const g of inc.groups) {

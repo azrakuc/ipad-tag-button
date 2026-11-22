@@ -139,6 +139,14 @@ function randomize() {
   const picked = [];
   let randomGroups = 0;
   for (const cat of state.categories) {
+    // カテゴリーの設定が先：全体から選ぶ（対象外のグループは除く）／対象外／グループごと
+    if (cat.random?.mode === 'off') continue;
+    if (cat.random?.mode === 'random') {
+      randomGroups++;
+      const pool = cat.groups.filter((g) => g.random?.mode !== 'off').flatMap((g) => g.tags);
+      picked.push(...pickRandom(pool, cat.random.count).map((t) => t.id));
+      continue;
+    }
     for (const g of cat.groups) {
       const mode = g.random?.mode || 'fixed';
       if (mode === 'fixed') g.tags.forEach((t) => prev.has(t.id) && keep.add(t.id));
@@ -149,7 +157,7 @@ function randomize() {
     }
   }
   if (randomGroups === 0) {
-    return toast(tr('ランダムにするグループがありません。管理タブでグループを編集して「ランダムで選ぶ」にしてください', 'No groups are set to random. Edit a group in the Manage tab and choose "Pick at random"'), { ms: 5000 });
+    return toast(tr('ランダムにするものがありません。管理タブで、カテゴリーかグループの「編集」から「ランダム」を設定してください', 'Nothing is set to random. In the Manage tab, set "Random" in the "Edit" of a category or group'), { ms: 5000 });
   }
   // 今の作業欄のうち、カードを持たないタグと、残すカードのタグはそのまま（×で消したタグも戻さない）
   const keysOf = (ids) => new Set(ids.flatMap((id) => (findTag(id) ? splitTags(findTag(id).content).map((t) => t.key) : [])));

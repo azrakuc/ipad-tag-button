@@ -22,7 +22,11 @@ function renderCats() {
   const list = $('m-cats');
   list.replaceChildren();
   for (const cat of state.categories) {
-    const name = el('button', { type: 'button', className: 'm-main', textContent: tr(`${cat.categoryName}（${catTags(cat).length}）`, `${cat.categoryName} (${catTags(cat).length})`) });
+    const name = el('button', { type: 'button', className: 'm-main' }, [
+      el('span', { textContent: tr(`${cat.categoryName}（${catTags(cat).length}）`, `${cat.categoryName} (${catTags(cat).length})`) }),
+    ]);
+    const badge = catRandomBadge(cat);
+    if (badge) name.append(el('span', { className: 'm-sub', textContent: badge }));
     name.addEventListener('click', () => {
       selCatId = cat.id;
       selGroupId = null;
@@ -39,6 +43,12 @@ function renderCats() {
 function randomBadge(group) {
   if (group.random?.mode === 'random') return tr(`🎲 ランダム ${group.random.count} 個`, `🎲 Random: ${group.random.count}`);
   if (group.random?.mode === 'off') return tr('🎲 対象外', '🎲 Excluded');
+  return '';
+}
+
+function catRandomBadge(cat) {
+  if (cat.random?.mode === 'random') return tr(`🎲 全体から ${cat.random.count} 個`, `🎲 ${cat.random.count} from the whole category`);
+  if (cat.random?.mode === 'off') return tr('🎲 対象外', '🎲 Excluded');
   return '';
 }
 
@@ -128,10 +138,10 @@ function openCatDialog(id) {
   $('c-title').textContent = cat ? tr('カテゴリーを編集', 'Edit category') : tr('カテゴリーを追加', 'Add category');
   $('c-name').value = cat ? cat.categoryName : '';
   $('c-del').hidden = !cat;
-  $('c-random-box').hidden = !cat || cat.groups.length === 0;
-  $('c-random').value = 'keep';
-  $('c-count').value = '1';
+  $('c-random').value = cat?.random?.mode || 'groups';
+  $('c-count').value = String(cat?.random?.count || 1);
   syncCountField('c-random', 'c-count-field');
+  $('c-random-note').hidden = $('c-random').value !== 'random';
   $('dlg-cat').showModal();
 }
 
@@ -141,12 +151,10 @@ async function saveCat() {
   const cat = state.categories.find((c) => c.id === editingCatId);
   if (cat) {
     cat.categoryName = name;
-    if ($('c-random').value !== 'keep') {
-      const random = readRandom('c-random', 'c-count');
-      for (const g of cat.groups) applyRandom(g, random);
-    }
+    applyRandom(cat, readRandom('c-random', 'c-count'));
   } else {
     const created = { id: newId(), categoryName: name, groups: [] };
+    applyRandom(created, readRandom('c-random', 'c-count'));
     state.categories.push(created);
     selCatId = created.id;
     selGroupId = null;
@@ -364,7 +372,10 @@ export function init() {
   $('m-add-group').addEventListener('click', () => openGroupDialog(null));
   $('m-add-tag').addEventListener('click', () => openTagDialog(null));
   $('c-save').addEventListener('click', saveCat);
-  $('c-random').addEventListener('change', () => syncCountField('c-random', 'c-count-field'));
+  $('c-random').addEventListener('change', () => {
+    syncCountField('c-random', 'c-count-field');
+    $('c-random-note').hidden = $('c-random').value !== 'random';
+  });
   $('g-random').addEventListener('change', () => syncCountField('g-random', 'g-count-field'));
   $('c-cancel').addEventListener('click', () => $('dlg-cat').close());
   $('c-del').addEventListener('click', deleteCat);
