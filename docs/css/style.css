@@ -35,6 +35,7 @@ html, body {
   font: 17px/1.4 -apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif;
   -webkit-text-size-adjust: 100%;
   touch-action: manipulation;
+  overscroll-behavior: none; /* 画面を下に引っ張っての再読み込みで、入力中の内容が消えないようにする */
 }
 
 #app {

@@ -8,6 +8,7 @@ import { tr, onLang } from './i18n.js';
 import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
 const SOURCE_KEY = 'itb:extractSource';
+const DRAFT_KEY = 'itb:extractDraft'; // ③の入力中の内容（名前・内容・サムネイル）
 const MAX_SOURCE = 100000;
 const CHIP_DELAY_MS = 250;
 
@@ -23,6 +24,28 @@ function saveSource() {
     localStorage.setItem(SOURCE_KEY, $('x-source').value);
   } catch {
     // 保存できなくても動作には影響しない
+  }
+}
+
+// ③の入力中の内容を端末に保存する。再読み込みやアプリの切り替えで消えないようにするため。
+function saveDraft() {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ name: $('x-name').value, content: $('x-content').value, thumb }));
+  } catch {
+    // 保存できなくても動作には影響しない（サムネイルが大きすぎるときなど）
+  }
+}
+
+function loadDraft() {
+  try {
+    const d = JSON.parse(localStorage.getItem(DRAFT_KEY));
+    if (!d || typeof d !== 'object') return;
+    if (typeof d.name === 'string') $('x-name').value = d.name.slice(0, LIMITS.name);
+    if (typeof d.content === 'string') $('x-content').value = d.content.slice(0, LIMITS.content);
+    // 自分で縮小した画像だけを戻す（data:image/ で始まるもの）
+    if (typeof d.thumb === 'string' && /^data:image\/(png|jpeg|webp|gif);base64,/.test(d.thumb)) setThumb(d.thumb, false);
+  } catch {
+    // 読めなくても動作には影響しない
   }
 }
 
@@ -82,6 +105,7 @@ function toggleChip(t) {
     box.value = base ? `${base}${joiner}${t.text}` : t.text;
   }
   updateChipStates();
+  saveDraft();
 }
 
 // --- 登録先の表示 ---
@@ -142,8 +166,9 @@ function clearSource() {
 }
 
 // --- ③のサムネイル ---
-function setThumb(url) {
+function setThumb(url, save = true) {
   thumb = url || null;
+  if (save) saveDraft();
   $('x-thumb').hidden = !thumb;
   $('x-thumb-del').hidden = !thumb;
   if (thumb) $('x-thumb').src = thumb;
@@ -159,13 +184,7 @@ async function useImage(file) {
 }
 
 // --- 登録 ---
-function clearForm() {
-  $('x-name').value = '';
-  $('x-content').value = '';
-  setThumb(null);
-  updateChipStates();
-}
-
+// 登録しても③は空にしない（少し変えて続けて登録できるように）。空にするときは「選択を解除」を使う。
 async function register() {
   const { group } = getTarget();
   if (!group) return toast(tr('上のリストでグループを選んでください', 'Select a group in the lists above'));
@@ -173,8 +192,11 @@ async function register() {
   const content = $('x-content').value.trim();
   if (!name || !content) return toast(tr('名前と内容を入力してください', 'Enter a name and content'));
   if (name.length > LIMITS.name || content.length > LIMITS.content) return toast(tr('名前か内容が長すぎます', 'The name or content is too long'));
+  // ③が残るので、うっかり 2 回押しても同じタグが二重にできないようにする
+  if (group.tags.some((t) => t.name === name && t.content === content)) {
+    return toast(tr('同じ名前と内容のタグが、このグループにすでにあります', 'A tag with the same name and content already exists in this group'), { ms: 3000 });
+  }
   group.tags.push({ id: newId(), name, content, thumbnail: thumb });
-  clearForm();
   if (await commit()) toast(tr(`「${name}」を登録しました`, `Registered "${name}"`));
 }
 
@@ -206,8 +228,6 @@ async function appendTo(tag) {
   const next = `${tag.content.trim().replace(/,\s*$/, '')}${joinerFor(mode)}${added.map((t) => t.text).join(joinerFor(mode))}`;
   if (next.length > LIMITS.content) return toast(tr(`内容が ${LIMITS.content} 文字を超えるため追記できません`, `Can't append: the content would exceed ${LIMITS.content} characters`));
   tag.content = next;
-  $('x-content').value = '';
-  updateChipStates();
   if (await commit()) toast(tr(`「${tag.name}」に ${added.length} 件を追記しました`, `Appended ${added.length} tags to "${tag.name}"`));
 }
 
@@ -220,12 +240,18 @@ export function init(hooks) {
     // 読めなくても動作には影響しない
   }
 
+  loadDraft();
+
   $('x-source').addEventListener('input', () => {
     saveSource();
     clearTimeout(chipTimer);
     chipTimer = setTimeout(renderChips, CHIP_DELAY_MS);
   });
-  $('x-content').addEventListener('input', updateChipStates);
+  $('x-content').addEventListener('input', () => {
+    updateChipStates();
+    saveDraft();
+  });
+  $('x-name').addEventListener('input', saveDraft);
   $('x-clear').addEventListener('click', clearSource);
   $('x-image').addEventListener('click', () => $('x-image-file').click());
   $('x-image-file').addEventListener('change', onImageChosen);
@@ -244,6 +270,7 @@ export function init(hooks) {
   $('x-unselect').addEventListener('click', () => {
     $('x-content').value = '';
     updateChipStates();
+    saveDraft();
   });
   $('a-cancel').addEventListener('click', () => $('dlg-append').close());
 
