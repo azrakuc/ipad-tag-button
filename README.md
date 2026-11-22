@@ -22,7 +22,9 @@ Draw Things / A1111・Forge / ComfyUI / NovelAI で生成した画像（PNG・JP
 
 ## プライバシーとセキュリティ
 
-- 登録したデータは、この iPad の IndexedDB にだけ保存されます。どこにも送信しません（CSP で外部への通信を禁止しています）。
+- 登録したデータ（カテゴリー・タグ・サムネイル・設定）と、読み込んだ画像・プロンプトは、この端末の中だけで扱います。どこにも送信しません。
+- 使われているかを知るため、アクセス解析 [GoatCounter](https://www.goatcounter.com/)（`azrakuc.goatcounter.com`）を使っています。送るのは「ページを開いた」という情報（ページの URL、参照元、画面の大きさ、ブラウザの種類など）だけで、Cookie は使いません。CSP で、通信先は自分のサイトと GoatCounter だけに限っています。
+- 自分の端末を数えたくないときは、<https://azrakuc.github.io/ipad-tag-button/#toggle-goatcounter> を一度開いてください（その端末では数えなくなります）。
 - GitHub に置かれるのはアプリのファイルだけです。**エクスポートした JSON をこのリポジトリにコミットしないでください。**
 - 詳しくは [SPEC.md](SPEC.md) の「9. セキュリティ」を参照。
 
@@ -39,7 +41,7 @@ python -m http.server 8000
 
 `http://localhost:8000/` で開けます（Service Worker は localhost でも動きます）。
 
-- ファイルを変更したら、[docs/sw.js](docs/sw.js) の `CACHE` の版（現在 `itb-v8`）を上げてください。上げないと、キャッシュ済みの古いファイルが使われ続けます。
+- ファイルを変更したら、[docs/sw.js](docs/sw.js) の `CACHE` の版（現在 `itb-v9`）を上げてください。上げないと、キャッシュ済みの古いファイルが使われ続けます。
 - ファイルを追加したら、`sw.js` の `ASSETS` にも追加してください。
 
 ## 外部ライブラリ
