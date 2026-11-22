@@ -48,3 +48,56 @@ export function splitTags(content) {
 export const SEPARATORS = { 'comma-space': ', ', comma: ',', space: ' ', newline: '\n' };
 
 export const joinTags = (texts, separator) => texts.join(separator);
+
+// --- 分け方（カンマ／文／分けない） ---
+// 文章形式のプロンプトは、カンマで分けると文の途中で切れてしまうため、文ごと・全体のまま扱う方法も用意する。
+const END_JA = '。！？';
+const END_EN = '.!?';
+
+// 改行と、文末（。！？ と、後ろが空白か文末の . ! ?）で区切る。句読点は文に残す。
+export function splitSentences(content) {
+  const s = String(content);
+  const parts = [];
+  let cur = '';
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === '\n' || ch === '\r') {
+      parts.push(cur);
+      cur = '';
+      continue;
+    }
+    cur += ch;
+    const next = s[i + 1];
+    if (END_JA.includes(ch) || (END_EN.includes(ch) && (next === undefined || /\s/.test(next)))) {
+      parts.push(cur);
+      cur = '';
+    }
+  }
+  parts.push(cur);
+  return dedupe(parts);
+}
+
+function dedupe(parts) {
+  const seen = new Set();
+  const out = [];
+  for (const p of parts) {
+    const text = p.trim().replace(/\s+/g, ' ');
+    if (!text) continue;
+    const key = normKey(text);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ key, text });
+  }
+  return out;
+}
+
+export const SPLIT_MODES = ['comma', 'sentence', 'whole'];
+
+export function splitByMode(content, mode) {
+  if (mode === 'sentence') return splitSentences(content);
+  if (mode === 'whole') return dedupe([String(content).replace(/\s*[\r\n]+\s*/g, ' ')]);
+  return splitTags(content);
+}
+
+// 切り出した部分を内容にまとめるときの区切り（カンマで分けるときだけ「, 」）。
+export const joinerFor = (mode) => (mode === 'comma' ? ', ' : ' ');

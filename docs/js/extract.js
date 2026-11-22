@@ -1,10 +1,10 @@
 // 管理画面の切り出しフォーム：長いプロンプトをチップに分け、選んだ部分をタグとして登録する。
 import { state, commit } from './state.js';
 import { newId, LIMITS } from './storage.js';
-import { splitTags } from './tags.js';
+import { splitTags, splitSentences, splitByMode, joinerFor } from './tags.js';
 import { resizeImage } from './image.js';
 import { readPrompt, NO_PROMPT_MESSAGE } from './metadata.js';
-import { $, el, toast } from './ui.js';
+import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
 const SOURCE_KEY = 'itb:extractSource';
 const MAX_SOURCE = 100000;
@@ -30,7 +30,10 @@ function registeredKeys() {
     registered = new Set();
     for (const cat of state.categories) {
       for (const group of cat.groups) {
-        for (const tag of group.tags) splitTags(tag.content).forEach((t) => registered.add(t.key));
+        // どの分け方でも「登録済み」と判定できるように、カンマ区切りと文区切りの両方を入れる
+        for (const tag of group.tags) {
+          for (const t of [...splitTags(tag.content), ...splitSentences(tag.content)]) registered.add(t.key);
+        }
       }
     }
   }
@@ -41,7 +44,7 @@ function registeredKeys() {
 function renderChips() {
   const box = $('x-chips');
   box.replaceChildren();
-  const tags = splitTags($('x-source').value);
+  const tags = splitByMode($('x-source').value, getSplitMode());
   if (tags.length === 0) {
     box.append(el('p', { className: 'empty small', textContent: '①にプロンプトを入れると、ここにタグが並びます。' }));
     return;
@@ -56,7 +59,7 @@ function renderChips() {
 }
 
 function updateChipStates() {
-  const on = new Set(splitTags($('x-content').value).map((t) => t.key));
+  const on = new Set(splitByMode($('x-content').value, getSplitMode()).map((t) => t.key));
   const done = registeredKeys();
   for (const chip of $('x-chips').querySelectorAll('.pick')) {
     const key = chip.dataset.key;
@@ -68,12 +71,14 @@ function updateChipStates() {
 
 function toggleChip(t) {
   const box = $('x-content');
-  const current = splitTags(box.value);
+  const mode = getSplitMode();
+  const joiner = joinerFor(mode);
+  const current = splitByMode(box.value, mode);
   if (current.some((c) => c.key === t.key)) {
-    box.value = current.filter((c) => c.key !== t.key).map((c) => c.text).join(', ');
+    box.value = current.filter((c) => c.key !== t.key).map((c) => c.text).join(joiner);
   } else {
     const base = box.value.trim().replace(/,\s*$/, '');
-    box.value = base ? `${base}, ${t.text}` : t.text;
+    box.value = base ? `${base}${joiner}${t.text}` : t.text;
   }
   updateChipStates();
 }
@@ -176,7 +181,7 @@ async function register() {
 function openAppend() {
   const { group } = getTarget();
   if (!group) return toast('上のリストでグループを選んでください');
-  if (splitTags($('x-content').value).length === 0) return toast('③の内容が空です。②のチップをタップしてください');
+  if (splitByMode($('x-content').value, getSplitMode()).length === 0) return toast('③の内容が空です。②のチップをタップしてください');
   const list = $('a-list');
   list.replaceChildren();
   for (const tag of group.tags) {
@@ -192,11 +197,12 @@ function openAppend() {
 }
 
 async function appendTo(tag) {
-  const have = new Set(splitTags(tag.content).map((t) => t.key));
-  const added = splitTags($('x-content').value).filter((t) => !have.has(t.key));
+  const mode = getSplitMode();
+  const have = new Set([...splitTags(tag.content), ...splitSentences(tag.content)].map((t) => t.key));
+  const added = splitByMode($('x-content').value, mode).filter((t) => !have.has(t.key));
   $('dlg-append').close();
   if (added.length === 0) return toast('追記するタグはありません（すべて含まれています）');
-  const next = `${tag.content.trim().replace(/,\s*$/, '')}, ${added.map((t) => t.text).join(', ')}`;
+  const next = `${tag.content.trim().replace(/,\s*$/, '')}${joinerFor(mode)}${added.map((t) => t.text).join(joinerFor(mode))}`;
   if (next.length > LIMITS.content) return toast(`内容が ${LIMITS.content} 文字を超えるため追記できません`);
   tag.content = next;
   $('x-content').value = '';
@@ -245,6 +251,7 @@ export function init(hooks) {
   $('s-replace').addEventListener('click', () => answerIncoming('replace'));
   $('dlg-source').addEventListener('close', () => { incoming = null; });
 
+  onSplitMode(renderChips);
   renderChips();
   refresh();
 }

@@ -1,8 +1,8 @@
 // 画像画面：画像に入っているプロンプトを取り出して表示する。画像も結果も保存しない。
 import { readPrompt, NO_PROMPT_MESSAGE } from './metadata.js';
-import { splitTags } from './tags.js';
+import { splitByMode } from './tags.js';
 import { addToWork } from './builder.js';
-import { $, el, toast } from './ui.js';
+import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
 let current = null;   // { file, result }
 let previewUrl = null;
@@ -33,7 +33,7 @@ function renderPositive(text) {
   const box = $('i-pos');
   box.replaceChildren();
   picked = new Set();
-  const tags = splitTags(text);
+  const tags = splitByMode(text, getSplitMode());
   if (tags.length === 0) {
     box.append(el('p', { className: 'empty small', textContent: 'ポジティブはありません。' }));
     return;
@@ -99,13 +99,14 @@ async function copy(text) {
 }
 
 function pickedItems() {
-  const all = splitTags(current.result.positive);
+  const all = splitByMode(current.result.positive, getSplitMode());
   const chosen = all.filter((t) => picked.has(t.key));
   return chosen.length > 0 ? chosen : all;
 }
 
 // onExtract(text, file)：「管理で切り出す」が押されたときに呼ばれる。
 export function init({ onExtract }) {
+  onSplitMode(() => current && renderPositive(current.result.positive));
   $('i-pick').addEventListener('click', () => $('i-file').click());
   $('i-file').addEventListener('change', () => {
     const file = $('i-file').files[0];

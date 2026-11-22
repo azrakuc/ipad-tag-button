@@ -39,9 +39,9 @@ python -m http.server 8000
 
 `http://localhost:8000/` で開けます（Service Worker は localhost でも動きます）。
 
-- ファイルを変更したら、[docs/sw.js](docs/sw.js) の `CACHE` の版（現在 `itb-v5`）を上げてください。上げないと、キャッシュ済みの古いファイルが使われ続けます。
+- ファイルを変更したら、[docs/sw.js](docs/sw.js) の `CACHE` の版（現在 `itb-v7`）を上げてください。上げないと、キャッシュ済みの古いファイルが使われ続けます。
 - ファイルを追加したら、`sw.js` の `ASSETS` にも追加してください。
 
 ## 外部ライブラリ
 
-- [SortableJS](https://github.com/SortableJS/Sortable) 1.15.6（MIT）：`vendor/Sortable.min.js`。元の拡張機能と同じファイルです。
+- [SortableJS](https://github.com/SortableJS/Sortable) 1.15.6（MIT）：`vendor/Sortable.min.js`。npm の公式パッケージ（sortablejs@1.15.6）の `Sortable.min.js` と同じファイルです。

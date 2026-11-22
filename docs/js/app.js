@@ -4,7 +4,7 @@ import { init as initBuilder } from './builder.js';
 import { init as initManager } from './manager.js';
 import { init as initImage } from './imageview.js';
 import { receive } from './extract.js';
-import { $ } from './ui.js';
+import { $, initModeSelects } from './ui.js';
 
 const VIEWS = ['builder', 'manager', 'image'];
 
@@ -57,6 +57,7 @@ async function main() {
   } catch (e) {
     alert('データベースを開けませんでした。プライベートブラウズの場合は、通常のブラウズで開いてください。\n' + e.message);
   }
+  initModeSelects();
   initBuilder();
   initManager();
   initImage({
