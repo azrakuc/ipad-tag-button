@@ -125,11 +125,16 @@ export async function loadCategories() {
 
 export const saveCategories = (categories) => set('categories', categories);
 
-const DEFAULT_SETTINGS = { separator: ', ' };
+// tagOrder：選択中のタグの並び。'group' = 管理画面の並び（カテゴリー > グループ > タグ）の順、'tap' = 押した順
+const DEFAULT_SETTINGS = { separator: ', ', tagOrder: 'group' };
 
 export async function loadSettings() {
   const s = await get('settings', {});
-  return { ...DEFAULT_SETTINGS, ...(s && typeof s.separator === 'string' ? { separator: s.separator } : {}) };
+  return {
+    ...DEFAULT_SETTINGS,
+    ...(s && typeof s.separator === 'string' ? { separator: s.separator } : {}),
+    ...(s && (s.tagOrder === 'group' || s.tagOrder === 'tap') ? { tagOrder: s.tagOrder } : {}),
+  };
 }
 
 export const saveSettings = (settings) => set('settings', settings);

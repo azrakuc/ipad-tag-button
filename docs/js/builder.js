@@ -57,6 +57,30 @@ function pruneSelected() {
   });
 }
 
+// --- 並び順 ---
+// 「グループの順」のときは、選択中のカードと作業欄のタグを、管理画面の並び（カテゴリー > グループ > タグ）の順に並べ直す。
+// カードを持たないタグ（画像画面から足したものなど）は、末尾に今の順のまま残す。
+const groupOrder = () => state.settings.tagOrder !== 'tap';
+const LAST = Number.MAX_SAFE_INTEGER;
+
+function sortWork() {
+  if (!groupOrder()) return;
+  const pos = new Map();
+  let i = 0;
+  for (const cat of state.categories) for (const g of cat.groups) for (const t of g.tags) pos.set(t.id, i++);
+  work.selected.sort((a, b) => (pos.get(a) ?? LAST) - (pos.get(b) ?? LAST));
+  const rank = new Map();
+  let r = 0;
+  for (const id of work.selected) {
+    const tag = findTag(id);
+    if (tag) for (const t of splitTags(tag.content)) if (!rank.has(t.key)) rank.set(t.key, r++);
+  }
+  work.tags = work.tags
+    .map((t, idx) => ({ t, idx }))
+    .sort((a, b) => (rank.get(a.t.key) ?? LAST) - (rank.get(b.t.key) ?? LAST) || a.idx - b.idx)
+    .map((x) => x.t);
+}
+
 function toggleCard(tag) {
   const index = work.selected.indexOf(tag.id);
   const mine = splitTags(tag.content);
@@ -74,6 +98,7 @@ function toggleCard(tag) {
     const drop = new Set(mine.map((t) => t.key));
     work.tags = work.tags.filter((t) => !drop.has(t.key) || keep.has(t.key));
   }
+  sortWork();
   saveWork();
   refresh();
 }
@@ -269,6 +294,7 @@ function refresh() {
 function render() {
   if (!state.categories.some((c) => c.id === currentCat)) currentCat = state.categories[0]?.id ?? null;
   pruneSelected();
+  sortWork(); // 管理画面で並べ替えたときや、設定を「グループの順」にしたときに追従する
   saveWork();
   renderCats();
   renderCards();
