@@ -1,4 +1,4 @@
-# Tag Button for iPad 仕様案 v1.0
+# Smart Tag Button 仕様案 v1.0
 
 > [tag_button](https://github.com/azrakuc/tag_button)（Chrome 拡張機能）を、iPad Safari で使える Web アプリにするための仕様案。
 > **【要確認】** の付いた項目は、決めてもらいたい点（括弧内が推奨案）。
@@ -34,11 +34,11 @@
 
 - Service Worker（オフライン動作）とクリップボードへのコピーは **HTTPS でないと動かない**。iPad でファイルを直接開く方法では使えない。
 - 公開先：
-  - リポジトリ：<https://github.com/azrakuc/ipad-tag-button>（公開リポジトリ）
-  - 公開ページ：<https://azrakuc.github.io/ipad-tag-button/>
+  - リポジトリ：<https://github.com/azrakuc/smart-tag-button>（公開リポジトリ）
+  - 公開ページ：<https://azrakuc.github.io/smart-tag-button/>
   - `main` ブランチの **`/docs` フォルダ**を GitHub Pages で公開する（ビルドは不要）。アプリ本体は `docs/` に置き、SPEC.md と README.md はリポジトリの直下に置く。
 - 配信されるのはアプリのファイルだけで、登録したタグは iPad 内の IndexedDB にしか保存されない（詳しくは「9. セキュリティ」）。
-- ページはサブパス（`/ipad-tag-button/`）で公開されるため、ファイルの参照はすべて相対パスにする。manifest の `start_url` と `scope` は `/ipad-tag-button/` にする。
+- ページはサブパス（`/smart-tag-button/`）で公開されるため、ファイルの参照はすべて相対パスにする。manifest の `start_url` と `scope` は `/smart-tag-button/` にする。
 
 ### 1.2 データ消失への対策
 
@@ -262,7 +262,7 @@
 ## 8. ファイル構成（案）
 
 ```text
-ipad-tag-button/
+smart-tag-button/
 ├── docs/               # 公開されるアプリ本体
 │   ├── index.html
 │   ├── manifest.webmanifest
@@ -339,7 +339,7 @@ GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` 
 
 - `azrakuc.github.io` の下にあるページは、ブラウザからは**すべて同じサイト**として扱われる。たとえば `azrakuc.github.io/別のリポジトリ/` のページからも、このアプリの IndexedDB と localStorage が読めてしまう。
 - 運用ルール：**同じアカウントの GitHub Pages で、他人が書いたコードや中身を確認していないスクリプトを公開しない。**
-- データベースの名前は、他と重ならないように `ipad-tag-button` にする。localStorage のキーにも `itb:` を付ける。
+- データベースの名前は、他と重ならないように `ipad-tag-button` にする。localStorage のキーにも `itb:` を付ける。（リポジトリ名を変えても、登録データを引き継ぐためこの名前のまま変えない）
 - さらに分けたくなったら、独自ドメインに移す（v1 では対象外）。
 
 ### 9.5 リポジトリとアカウントの運用
@@ -353,7 +353,7 @@ GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` 
 
 ### 9.6 Service Worker
 
-- 有効な範囲は `/ipad-tag-button/` の下だけにする。
+- 有効な範囲は `/smart-tag-button/` の下だけにする。
 - キャッシュするのは、このアプリのファイルだけにする。外部への通信を中継しない。
 - 新しい版を見つけても自動で切り替えず、「更新があります」を表示して、タップされたら切り替える。
 
@@ -385,7 +385,7 @@ GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` 
 - カテゴリーとタグの追加・編集・複製・削除・並べ替えができる。
 - iPad 版でエクスポートした JSON を、元の拡張機能で読み込める（グループは失われる）。
 - アプリを開き直しても、データと作業中のプロンプトが残っている。
-- <https://azrakuc.github.io/ipad-tag-button/> で公開され、ホーム画面に追加して使える。
+- <https://azrakuc.github.io/smart-tag-button/> で公開され、ホーム画面に追加して使える。
 - Safari の開発ツール（Mac の Safari に iPad をつないで確認する）で、CSP の違反がなく、外部への通信が自分のサイトと GoatCounter（ページを開いたときの計測だけ）以外にない。
 - `<script>alert(1)</script>` を名前に入れた JSON や、SVG のサムネイルを入れた JSON を読み込んでも、スクリプトが動かない。
 
@@ -400,7 +400,7 @@ GitHub Pages では HTTP ヘッダーを設定できないため、`index.html` 
 | 3 | プロンプト欄を手で編集できるようにするか | v1 では読み取り専用 |
 | 4 | 元の拡張機能との JSON | 読み込みは互換。書き出しは、グループを足した形式に、拡張機能用の `tags` も付ける |
 
-決定済み：公開先は `azrakuc/ipad-tag-button`（<https://azrakuc.github.io/ipad-tag-button/>）。
+決定済み：公開先は `azrakuc/smart-tag-button`（<https://azrakuc.github.io/smart-tag-button/>）。
 
 ---
 
