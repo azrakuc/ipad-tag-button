@@ -74,6 +74,7 @@ function renderTags() {
 }
 
 async function renderSettings() {
+  $('s-order').value = state.settings.tagOrder === 'tap' ? 'tap' : 'group';
   $('s-separator').value = Object.keys(SEPARATORS).find((k) => SEPARATORS[k] === state.settings.separator) || 'comma-space';
   const last = state.meta.lastExportedAt;
   $('d-last').textContent = last ? tr('最終エクスポート：', 'Last export: ') + new Date(last).toLocaleString(locale()) : tr('まだエクスポートしていません。定期的にバックアップしてください。', "You haven't exported yet. Please back up regularly.");
@@ -356,6 +357,7 @@ export function init() {
   });
 
   $('s-separator').addEventListener('change', () => updateSettings({ separator: SEPARATORS[$('s-separator').value] }));
+  $('s-order').addEventListener('change', () => updateSettings({ tagOrder: $('s-order').value === 'tap' ? 'tap' : 'group' }));
 
   $('d-export').addEventListener('click', () => IO.download().then(() => toast(tr('エクスポートしました', 'Exported'))));
   if (IO.canShare()) {

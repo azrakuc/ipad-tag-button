@@ -153,6 +153,13 @@
             <option value="newline" data-en="New line">改行</option>
           </select>
         </label>
+        <label class="field">
+          <span data-en="Order of selected tags">選択中のタグの並び順</span>
+          <select id="s-order">
+            <option value="group" data-en="Group order (as arranged in Manage)">グループの順（管理画面の並び）</option>
+            <option value="tap" data-en="The order you tapped">押した順</option>
+          </select>
+        </label>
         <p id="s-storage" class="muted"></p>
       </div>
 
@@ -220,7 +227,7 @@
           <summary>プロンプトを作る（作成タブ）</summary>
           <ol>
             <li>下のカテゴリーボタンで、カテゴリーを選びます。</li>
-            <li>カードをタップすると、そのカードのタグが右（縦画面では下）の「選択中のタグ」に集まります。もう一度タップすると外れます。</li>
+            <li>カードをタップすると、そのカードのタグが右（縦画面では下）の「選択中のタグ」に集まります。もう一度タップすると外れます。タグは、押した順ではなく、管理画面の並び（カテゴリー → グループ → タグ）の順に並びます（管理タブの「設定」で「押した順」にも変えられます）。</li>
             <li>カードを長押しすると、タグの内容を表示します。</li>
             <li>カテゴリーボタンの下に、選択中のカードの名前が 1 行で並びます。多いときは、その行を横にスクロールして見られます。</li>
             <li>縦画面では「選択中のタグ」の見出しをタップすると、欄を折りたたんで、カードを選ぶ場所を広げられます。折りたたんでいる間も、見出しの横の「コピー」でコピーできます。</li>
@@ -296,7 +303,7 @@
           <summary>Build a prompt (Build tab)</summary>
           <ol>
             <li>Pick a category with the buttons at the bottom.</li>
-            <li>Tap a card and its tags are collected in "Selected tags" on the right (below on a portrait screen). Tap it again to remove them.</li>
+            <li>Tap a card and its tags are collected in "Selected tags" on the right (below on a portrait screen). Tap it again to remove them. Tags are arranged in the order of the Manage tab (category → group → tag), not the order you tap (you can switch to "The order you tapped" in Settings on the Manage tab).</li>
             <li>Press and hold a card to see the content of its tags.</li>
             <li>The names of the selected cards are listed in one line below the category buttons. If there are many, scroll that line sideways.</li>
             <li>On a portrait screen, tap the "Selected tags" heading to collapse the panel and make more room for the cards. While it is collapsed, you can still copy with the "Copy" button next to the heading.</li>
