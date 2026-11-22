@@ -160,14 +160,40 @@ main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr); /* 中身（長い 1 行）で列が広がって、横にはみ出さないように */
   grid-template-rows: minmax(0, 1fr) auto;
 }
 @media (orientation: landscape) {
   #view-builder { grid-template-columns: minmax(0, 1fr) 340px; grid-template-rows: minmax(0, 1fr); }
 }
 
-.b-left { display: flex; flex-direction: column; min-height: 0; }
+.b-left { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+
+/* 選択中のカード名：1 行で並べ、はみ出す分はこの行だけ横にスクロールする */
+.sel-cards {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 6px 12px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
+  background: var(--panel);
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+.sel-cards-label { flex: none; color: var(--muted); }
+.sel-cards-empty { flex: none; color: var(--muted); }
+.sel-card-name {
+  flex: none;
+  padding: 3px 10px;
+  color: var(--text);
+  background: var(--sel);
+  border: 1px solid var(--accent);
+  border-radius: 12px;
+}
 
 .cards {
   flex: 1;

@@ -246,7 +246,20 @@ function toggleSel() {
   applySelCollapsed();
 }
 
+// カテゴリーボタンの下に、選択中のカード名を 1 行で並べる（はみ出す分は、その行だけ横にスクロール）。
+function renderSelCards() {
+  const box = $('sel-cards');
+  const tags = work.selected.map(findTag).filter(Boolean);
+  box.replaceChildren(el('span', { className: 'sel-cards-label', textContent: tr('選択中：', 'Selected:') }));
+  if (tags.length === 0) {
+    box.append(el('span', { className: 'sel-cards-empty', textContent: tr('選択中のカードはありません', 'No cards selected') }));
+    return;
+  }
+  for (const tag of tags) box.append(el('span', { className: 'sel-card-name', textContent: tag.name }));
+}
+
 function refresh() {
+  renderSelCards();
   $('sel-title').textContent = tr(`選択中のタグ（${work.tags.length}）`, `Selected tags (${work.tags.length})`);
   updateCardSelection();
   renderChips();
