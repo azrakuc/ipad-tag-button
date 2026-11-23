@@ -4,7 +4,8 @@ import { tr } from './i18n.js';
 //   [{ id, categoryName, groups: [{ id, name, tags: [{ id, name, content, thumbnail }] }] }]
 // （元の拡張機能は groups のない [{ id, categoryName, tags }]。読み込み時に変換する）
 
-const DB_NAME = 'ipad-tag-button';
+const DB_NAME = 'smart-tag-button';
+const LEGACY_DB_NAME = 'ipad-tag-button'; // 旧名。起動時に、ここにあるデータを新しい DB へコピーする
 const STORE = 'kv';
 
 export const LIMITS = {
@@ -102,12 +103,66 @@ export function normalizeCategories(data) {
 
 // --- IndexedDB（キーと値だけの単純な保存領域）---
 let dbPromise;
-function openDb() {
-  dbPromise ||= new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
+function openNamed(name) {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(name, 1);
     req.onupgradeneeded = () => req.result.createObjectStore(STORE);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
+  });
+}
+
+// 旧 DB（ipad-tag-button）を開く。存在しなければ、作らずに null を返す。
+function openLegacyDb() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(LEGACY_DB_NAME, 1);
+    let created = false;
+    req.onupgradeneeded = () => {
+      created = true; // 旧 DB がなかった。作らないように中止する
+      req.transaction.abort();
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => (created ? resolve(null) : reject(req.error));
+  });
+}
+
+const readAll = (db) => new Promise((resolve, reject) => {
+  const store = db.transaction(STORE).objectStore(STORE);
+  const keysReq = store.getAllKeys();
+  const valuesReq = store.getAll();
+  valuesReq.onsuccess = () => resolve(keysReq.result.map((k, i) => [k, valuesReq.result[i]]));
+  valuesReq.onerror = () => reject(valuesReq.error);
+});
+
+// 新しい DB にまだ登録データがなく、旧 DB にあるときだけ、旧 DB の中身をコピーする。旧 DB は消さない。
+async function migrateLegacyDb(db) {
+  const has = await new Promise((resolve, reject) => {
+    const req = db.transaction(STORE).objectStore(STORE).getKey('categories');
+    req.onsuccess = () => resolve(req.result !== undefined);
+    req.onerror = () => reject(req.error);
+  });
+  if (has) return;
+  const legacy = await openLegacyDb();
+  if (!legacy) return;
+  try {
+    const entries = await readAll(legacy);
+    if (entries.length === 0) return;
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      for (const [k, v] of entries) tx.objectStore(STORE).put(v, k);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error(tr('保存が中止されました。', 'Saving was aborted.')));
+    });
+  } finally {
+    legacy.close();
+  }
+}
+
+function openDb() {
+  dbPromise ||= openNamed(DB_NAME).then(async (db) => {
+    await migrateLegacyDb(db);
+    return db;
   });
   return dbPromise;
 }

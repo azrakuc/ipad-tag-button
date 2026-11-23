@@ -45,7 +45,7 @@ python -m http.server 8000
 
 `http://localhost:8000/` で開けます（Service Worker は localhost でも動きます）。
 
-- `docs/` のファイルを変更したら、`npm run bump` を実行してください。[docs/sw.js](docs/sw.js) のキャッシュ版（現在 `itb-v25`）が上がります。上げないと、iPhone / iPad でキャッシュ済みの古いファイルが使われ続けます。
+- `docs/` のファイルを変更したら、`npm run bump` を実行してください。[docs/sw.js](docs/sw.js) のキャッシュ版（現在 `itb-v26`）が上がります。上げないと、iPhone / iPad でキャッシュ済みの古いファイルが使われ続けます。
 - ファイルを追加したら、`sw.js` の `ASSETS` にも追加してください。
 
 ### テスト

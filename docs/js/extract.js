@@ -8,8 +8,8 @@ import { tr, onLang } from './i18n.js';
 import { loadText, saveText, loadJSON, saveJSON } from './store.js';
 import { $, el, toast, getSplitMode, onSplitMode } from './ui.js';
 
-const SOURCE_KEY = 'itb:extractSource';
-const DRAFT_KEY = 'itb:extractDraft'; // ③の入力中の内容（名前・内容・サムネイル）
+const SOURCE_KEY = 'smart-tag-button:extractSource';
+const DRAFT_KEY = 'smart-tag-button:extractDraft'; // ③の入力中の内容（名前・内容・サムネイル）
 const MAX_SOURCE = 100000;
 const CHIP_DELAY_MS = 250;
 

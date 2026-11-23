@@ -4,7 +4,7 @@
 
 import { loadText, saveText } from './store.js';
 
-const KEY = 'itb:lang';
+const KEY = 'smart-tag-button:lang';
 const LANGS = ['ja', 'en'];
 
 function detect() {

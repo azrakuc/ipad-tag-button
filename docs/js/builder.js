@@ -6,10 +6,10 @@ import { tr, onLang } from './i18n.js';
 import { loadText, saveText, loadJSON, saveJSON } from './store.js';
 import { planRandom } from './random.js';
 
-const WORK_KEY = 'itb:work';
-const LAST_KEY = 'itb:lastCategory';
-const COLLAPSED_KEY = 'itb:collapsedGroups';
-const SEL_COLLAPSED_KEY = 'itb:selCollapsed'; // 選択中のタグ欄を折りたたんでいるか（縦画面だけで効く）
+const WORK_KEY = 'smart-tag-button:work';
+const LAST_KEY = 'smart-tag-button:lastCategory';
+const COLLAPSED_KEY = 'smart-tag-button:collapsedGroups';
+const SEL_COLLAPSED_KEY = 'smart-tag-button:selCollapsed'; // 選択中のタグ欄を折りたたんでいるか（縦画面だけで効く）
 const LONG_PRESS_MS = 500;
 
 // 作業中の状態：work.tags = 並び順どおりのタグ [{ key, text }]、work.selected = 選択中のカード ID

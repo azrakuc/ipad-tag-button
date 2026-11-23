@@ -41,7 +41,7 @@ test('押した順ではなく、管理画面の並び（グループの順）�
 
 test('アンダースコアとスペースの違いも重複として整理する（保存済みの作業欄も）', async () => {
   const app = await openApp(server.url, {
-    initScript: () => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', '1'); localStorage.setItem('itb:work', JSON.stringify({ tags: [{ key: 'long_hair', text: 'long_hair' }, { key: 'long hair', text: 'long hair' }], selected: [] })); } },
+    initScript: () => { if (!sessionStorage.getItem('s')) { sessionStorage.setItem('s', '1'); localStorage.setItem('smart-tag-button:work', JSON.stringify({ tags: [{ key: 'long_hair', text: 'long_hair' }, { key: 'long hair', text: 'long hair' }], selected: [] })); } },
   });
   const { page } = app;
   assert.equal(await out(page), 'long_hair, ');

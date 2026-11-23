@@ -8,7 +8,7 @@ before(async () => { server = await startServer(); });
 after(async () => { await closeBrowser(); await server.close(); });
 
 const rawCategories = (page) => page.evaluate(() => new Promise((resolve) => {
-  const req = indexedDB.open('ipad-tag-button', 1);
+  const req = indexedDB.open('smart-tag-button', 1);
   req.onsuccess = () => { const g = req.result.transaction('kv').objectStore('kv').get('categories'); g.onsuccess = () => resolve(g.result); };
 }));
 
@@ -17,7 +17,7 @@ test('保存データが壊れていたら、知らせて保存を止める（�
   const { page } = app;
   // 保存データを、読めない形（配列でない）にする
   await page.evaluate(() => new Promise((resolve) => {
-    const req = indexedDB.open('ipad-tag-button', 1);
+    const req = indexedDB.open('smart-tag-button', 1);
     req.onsuccess = () => { const tx = req.result.transaction('kv', 'readwrite'); tx.objectStore('kv').put({ broken: true }, 'categories'); tx.oncomplete = resolve; };
   }));
   await page.reload(); await page.waitForFunction(() => document.querySelector('.tab.active'));
@@ -67,5 +67,54 @@ test('iPhone / iPad：エクスポートは共有シート。全置換で共有�
   await page.waitForFunction(() => document.querySelector('#toast').textContent.includes('やめました'));
   assert.match(msg, /バックアップを書き出せませんでした/);
   assert.match(await page.textContent('#m-cats'), /キャラ/);
+  await app.close();
+});
+
+test('旧名の DB（ipad-tag-button）と旧キー（itb:）のデータを、新しい名前へ引き継ぐ', async () => {
+  const app = await openApp(server.url);
+  const { page } = app;
+  // 新しい DB を消し、旧名の DB と旧キーに、データを入れた状態を作る
+  await page.evaluate(async () => {
+    const del = (name) => new Promise((resolve) => { const r = indexedDB.deleteDatabase(name); r.onsuccess = r.onerror = r.onblocked = () => resolve(); });
+    const m = await import('./js/state.js');
+    m.state.readOnly = true; // 画面側が新しい DB へ書かないように止める
+    await new Promise((resolve) => {
+      const open = indexedDB.open('smart-tag-button', 1);
+      open.onsuccess = () => { open.result.close(); resolve(); };
+    });
+    await del('smart-tag-button');
+    await new Promise((resolve) => {
+      const req = indexedDB.open('ipad-tag-button', 1);
+      req.onupgradeneeded = () => req.result.createObjectStore('kv');
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put([{ id: 'c1', categoryName: '旧データ', groups: [] }], 'categories');
+        tx.objectStore('kv').put({ separator: ' ' }, 'settings');
+        tx.oncomplete = () => { req.result.close(); resolve(); };
+      };
+    });
+    localStorage.clear();
+    localStorage.setItem('itb:lang', 'en');
+  });
+  await page.reload(); await page.waitForFunction(() => document.querySelector('.tab.active'));
+  await page.waitForFunction(() => document.querySelector('#m-cats') && document.body.textContent.includes('旧データ'), null, { timeout: 5000 }).catch(() => {});
+  assert.equal((await rawCategories(page))[0].categoryName, '旧データ', '新しい DB に引き継がれる');
+  assert.equal(await page.evaluate(() => localStorage.getItem('smart-tag-button:lang')), 'en', '旧キーの値が新キーへ引き継がれる');
+  assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+  // 旧 DB は消さない
+  const legacyKept = await page.evaluate(() => new Promise((resolve) => {
+    const req = indexedDB.open('ipad-tag-button', 1);
+    req.onsuccess = () => { const g = req.result.transaction('kv').objectStore('kv').get('categories'); g.onsuccess = () => resolve(g.result.length); };
+  }));
+  assert.equal(legacyKept, 1);
+  await app.close();
+});
+
+test('旧 DB がなくても、新しい DB を空のまま開ける（旧 DB を作らない）', async () => {
+  const app = await openApp(server.url);
+  const { page } = app;
+  const databases = await page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name));
+  assert.ok(databases.includes('smart-tag-button'));
+  assert.ok(!databases.includes('ipad-tag-button'));
   await app.close();
 });

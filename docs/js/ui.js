@@ -28,7 +28,7 @@ export function toast(message, { label, onAction, ms = 2200 } = {}) {
 import { loadText, saveText } from './store.js';
 
 // --- 分け方の設定（切り出しフォームと画像画面で共有。端末に保存する） ---
-const MODE_KEY = 'itb:splitMode';
+const MODE_KEY = 'smart-tag-button:splitMode';
 const MODES = ['comma', 'sentence', 'whole'];
 const modeListeners = [];
 let mode = MODES.includes(loadText(MODE_KEY)) ? loadText(MODE_KEY) : 'comma';
