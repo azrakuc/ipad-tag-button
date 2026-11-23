@@ -119,6 +119,28 @@ async function renderSettings() {
   }
 }
 
+// 一覧（カテゴリー・グループ・タグ）は、それぞれ一覧の中だけスクロールする。
+// 描き直しても、スクロールの位置が先頭に戻らないようにする。
+//   content … 一覧に出す中身が変わったら（別のカテゴリーのグループなど）、先頭に戻す
+//   active  … 選択中の項目が変わったときだけ、その項目が見える位置まで動かす
+const listState = new Map();
+function withScroll(list, content, active, build) {
+  const prev = listState.get(list.id);
+  const top = list.scrollTop;
+  build();
+  list.scrollTop = prev && prev.content === content ? top : 0;
+  if (!prev || prev.active !== active || prev.content !== content) {
+    const item = list.querySelector('.m-item.active');
+    if (item && list.clientHeight > 0) {
+      const a = item.getBoundingClientRect();
+      const l = list.getBoundingClientRect();
+      if (a.top < l.top) list.scrollTop -= l.top - a.top;
+      else if (a.bottom > l.bottom) list.scrollTop += a.bottom - l.bottom;
+    }
+  }
+  listState.set(list.id, { content, active });
+}
+
 let dirty = false;
 
 function render() {
@@ -129,9 +151,9 @@ function render() {
   dirty = false;
   if (!selCat()) selCatId = state.categories[0]?.id ?? null;
   if (!selGroup()) selGroupId = selCat()?.groups[0]?.id ?? null;
-  renderCats();
-  renderGroups();
-  renderTags();
+  withScroll($('m-cats'), 'cats', selCatId, renderCats);
+  withScroll($('m-groups'), selCatId, selGroupId, renderGroups);
+  withScroll($('m-tags'), selGroupId, null, renderTags);
   renderSettings();
   Extract.refresh();
 }

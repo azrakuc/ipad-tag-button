@@ -1,7 +1,7 @@
 // 管理画面：切り出しフォーム、ランダムの設定、並べ替え、インポート
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { startServer, closeBrowser, openApp, seed, tag } from '../helpers.mjs';
+import { startServer, closeBrowser, openApp, seed, tag, devices } from '../helpers.mjs';
 
 let server;
 before(async () => { server = await startServer(); });
@@ -108,5 +108,49 @@ test('インポート：追加は統合、全置換はバックアップを書�
   await page.waitForFunction(() => document.querySelector('#m-cats').textContent.includes('新しい'));
   assert.equal(dialogs.length, 2);
   assert.match(dialogs[0], /バックアップを書き出しました/);
+  await app.close();
+});
+
+test('一覧は、一覧の中だけスクロールし、ページ全体のスクロールの余地も残す。描き直しても位置を保つ', async () => {
+  for (const [label, opts] of [['iPhone', { device: devices['iPhone 13'] }], ['iPad 横', { viewport: { width: 1180, height: 820 } }]]) {
+    const app = await openApp(server.url, opts);
+    const { page } = app;
+    const groups = Array.from({ length: 40 }, (_, i) => ({ id: `g${i}`, name: `グループ${i}`, tags: Array.from({ length: 3 }, (_, k) => tag(`g${i}-t${k}`, `c${i}${k}`)) }));
+    const cats = Array.from({ length: 3 }, (_, i) => ({ id: `c${i}`, categoryName: `カテゴリー${i}`, groups: i === 0 ? groups : [{ id: `x${i}`, name: `別${i}`, tags: [] }] }));
+    await seed(page, cats);
+    await page.click('.tab[data-view=manager]');
+    const info = (id) => page.$eval(id, (e) => ({ scroll: e.scrollHeight, client: e.clientHeight, top: e.scrollTop, inner: innerHeight }));
+    const g = await info('#m-groups');
+    assert.ok(g.scroll > g.client, `${label}: グループ一覧の中でスクロールできる`);
+    assert.ok(g.client <= g.inner * (label === 'iPhone' ? 0.47 : 0.56), `${label}: 一覧が画面を占領しない（${g.client}/${g.inner}）`);
+    // 一覧の下の方でグループを選ぶ → 描き直しても位置は先頭に戻らない
+    await page.$eval('#m-groups', (e) => { e.scrollTop = e.scrollHeight; });
+    const before = (await info('#m-groups')).top;
+    await page.click('#m-groups .m-item:last-child .m-main');
+    await page.waitForFunction(() => document.querySelector('#m-groups .m-item.active .m-main').textContent.startsWith('グループ39'));
+    const after = (await info('#m-groups')).top;
+    assert.ok(Math.abs(after - before) < 4, `${label}: スクロール位置を保つ（${before} → ${after}）`);
+    // 別のカテゴリーを選ぶと、グループ一覧は先頭に戻る
+    await page.click('#m-cats .m-item:has-text("カテゴリー1") .m-main');
+    await page.waitForFunction(() => document.querySelector('#m-groups').textContent.includes('別1'));
+    assert.equal((await info('#m-groups')).top, 0);
+    // ページ全体も、これまでどおりスクロールできる（一覧の外を触れる）
+    assert.ok(await page.$eval('#view-manager', (e) => e.scrollHeight > e.clientHeight), `${label}: ページ全体のスクロール`);
+    assert.deepEqual(app.errors, []);
+    await app.close();
+  }
+});
+
+test('スクロールできる一覧の中でも、並べ替えができる', async () => {
+  const app = await openApp(server.url); // マウスのドラッグで試すため、タッチ端末の設定にはしない
+  const { page } = app;
+  await seed(page, Array.from({ length: 12 }, (_, i) => ({ id: `c${i}`, categoryName: `カテゴリー${String(i).padStart(2, '0')}`, groups: [] })));
+  await page.click('.tab[data-view=manager]');
+  assert.ok(await page.$eval('#m-cats', (e) => e.scrollHeight > e.clientHeight));
+  const first = () => page.$eval('#m-cats .m-main', (e) => e.textContent.slice(0, 7));
+  await page.locator('#m-cats .drag-handle').nth(0).dragTo(page.locator('#m-cats .drag-handle').nth(2));
+  await page.waitForFunction(() => document.querySelector('#m-cats .m-main').textContent.startsWith('カテゴリー01'));
+  assert.equal(await first(), 'カテゴリー01');
+  assert.deepEqual(app.errors, []);
   await app.close();
 });
