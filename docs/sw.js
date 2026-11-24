@@ -1,5 +1,5 @@
 // アプリのファイルだけをキャッシュする（cache-first）。ファイルを変えたら CACHE の版を上げる。
-const CACHE = 'itb-v27';
+const CACHE = 'itb-v28';
 const ASSETS = [
   './',
   './index.html',

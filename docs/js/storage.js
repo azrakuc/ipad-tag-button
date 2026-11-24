@@ -5,7 +5,7 @@ import { tr } from './i18n.js';
 // （元の拡張機能は groups のない [{ id, categoryName, tags }]。読み込み時に変換する）
 
 const DB_NAME = 'smart-tag-button';
-const LEGACY_DB_NAME = 'ipad-tag-button'; // 旧名。起動時に、ここにあるデータを新しい DB へコピーする
+const LEGACY_DB_NAME = 'ipad-tag-button'; // 旧名。起動時に、ここにあるデータを新しい DB へコピーしてから消す
 const STORE = 'kv';
 
 export const LIMITS = {
@@ -134,7 +134,7 @@ const readAll = (db) => new Promise((resolve, reject) => {
   valuesReq.onerror = () => reject(valuesReq.error);
 });
 
-// 新しい DB にまだ登録データがなく、旧 DB にあるときだけ、旧 DB の中身をコピーする。旧 DB は消さない。
+// 新しい DB にまだ登録データがなく、旧 DB にあるときだけ、旧 DB の中身をコピーする。
 async function migrateLegacyDb(db) {
   const has = await new Promise((resolve, reject) => {
     const req = db.transaction(STORE).objectStore(STORE).getKey('categories');
@@ -159,9 +159,25 @@ async function migrateLegacyDb(db) {
   }
 }
 
+// 引き継ぎが済んだら、旧 DB を消す。
+// 新しい DB の登録データを正しく読める（配列である）ときだけ消す。新しい DB が壊れているときは、予備として旧 DB を残す。
+async function removeLegacyDb(db) {
+  const ok = await new Promise((resolve) => {
+    const req = db.transaction(STORE).objectStore(STORE).get('categories');
+    req.onsuccess = () => resolve(Array.isArray(req.result));
+    req.onerror = () => resolve(false);
+  });
+  if (!ok) return;
+  await new Promise((resolve) => {
+    const req = indexedDB.deleteDatabase(LEGACY_DB_NAME); // 旧 DB がなければ、何もせずに終わる
+    req.onsuccess = req.onerror = req.onblocked = () => resolve();
+  });
+}
+
 function openDb() {
   dbPromise ||= openNamed(DB_NAME).then(async (db) => {
     await migrateLegacyDb(db);
+    await removeLegacyDb(db);
     return db;
   });
   return dbPromise;

@@ -1,7 +1,7 @@
 // 端末（localStorage）への小さな保存。プライベートブラウズなどで使えないときも、例外を出さずに既定値を返す。
 // （登録データは IndexedDB。ここは作業中の状態や表示の設定など、消えても困らないものだけ）
 
-// キーの接頭辞は smart-tag-button:（旧：itb:）。旧キーの値は、新キーが空のときだけコピーする（旧キーは消さない）。
+// キーの接頭辞は smart-tag-button:（旧：itb:）。旧キーの値は、新キーが空のときだけコピーし、コピーできたら旧キーは消す。
 const LEGACY_PREFIX = 'itb:';
 const PREFIX = 'smart-tag-button:';
 
@@ -15,6 +15,7 @@ function migrateLegacyKeys() {
     for (const k of legacy) {
       const next = PREFIX + k.slice(LEGACY_PREFIX.length);
       if (localStorage.getItem(next) === null) localStorage.setItem(next, localStorage.getItem(k));
+      if (localStorage.getItem(next) !== null) localStorage.removeItem(k);
     }
   } catch {
     // 使えない環境では、移行するものもない
