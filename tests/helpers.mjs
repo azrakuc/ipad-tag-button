@@ -50,6 +50,9 @@ export async function openApp(baseUrl, { locale = 'ja-JP', viewport = { width: 1
   page.on('console', (m) => { if (/Content Security Policy/i.test(m.text())) errors.push('csp: ' + m.text()); });
   await page.goto(baseUrl);
   await page.waitForFunction(() => document.querySelector('.tab.active'));
+  // .tab.active は、登録データの読み込みが終わる前に付く。読み込みが seed のあとに終わると、空のデータで上書きされるため、
+  // 作成画面の一覧（カードまたは「カテゴリーがありません」）が描かれる（＝起動が終わる）まで待つ。
+  await page.waitForFunction(() => document.getElementById('cards')?.childElementCount > 0);
   return { page, context, errors, close: () => context.close() };
 }
 

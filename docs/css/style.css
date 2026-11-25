@@ -609,6 +609,13 @@ details > summary { min-height: 44px; display: flex; align-items: center; }
   .tab { flex: 1; padding: 0 8px; }
 }
 
+/* とくに狭い画面（320px 前後）では、1 段目（タイトル・Ko-fi・言語）が収まるように、間隔・余白・タイトルを小さくする */
+@media (max-width: 360px) {
+  .brand { gap: 6px; }
+  .kofi, .lang { padding: 0 8px; }
+  .topbar h1 { font-size: 15px; }
+}
+
 /* --- 説明画面 --- */
 #view-help { flex: 1; overflow-x: hidden; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch; }
 .help { max-width: 720px; margin: 0 auto; }
