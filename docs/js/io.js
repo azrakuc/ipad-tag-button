@@ -3,6 +3,7 @@ import { state, updateMeta, catTags } from './state.js';
 import { LIMITS, newId, normalizeCategories } from './storage.js';
 import { normKey } from './tags.js';
 import { tr } from './i18n.js';
+import { isZip, readZipJsons } from './zip.js';
 
 const pad = (n) => String(n).padStart(2, '0');
 const today = () => {
@@ -55,20 +56,48 @@ export async function share() {
 // 書き出したら true、キャンセルしたら false（失敗したら例外）。
 export const exportBackup = () => (isIOS() && canShare() ? share() : download());
 
-// ファイルを読んで検証する。不正なら例外を投げる（データは一切変更しない）。
-export async function parseFile(file) {
-  if (file.size > LIMITS.fileBytes) throw new Error(tr('ファイルが大きすぎます（20MB まで）。', 'The file is too large (up to 20 MB).'));
+// JSON の文字列を読んで検証する。label はエラーに添えるファイル名（zip の中のとき）。
+function parseJsonText(text, label) {
+  const prefix = label ? `${label}：` : '';
   let data;
   try {
-    data = JSON.parse(await file.text());
+    data = JSON.parse(text);
   } catch {
-    throw new Error(tr('JSON として読めません。', 'Could not read it as JSON.'));
+    throw new Error(prefix + tr('JSON として読めません。', 'Could not read it as JSON.'));
   }
-  const result = normalizeCategories(data);
+  let result;
+  try {
+    result = normalizeCategories(data);
+  } catch (e) {
+    throw new Error(prefix + e.message);
+  }
   if (result.categories.length === 0 && (result.skippedCategories > 0 || data.length > 0)) {
-    throw new Error(tr('読み込める内容がありませんでした。', 'There was nothing to import.'));
+    throw new Error(prefix + tr('読み込める内容がありませんでした。', 'There was nothing to import.'));
   }
   return result;
+}
+
+// zip の中の .json をすべて読み、「追加」と同じ規則で 1 つにまとめる。1 つでも読めなければ全体を拒否する。
+async function parseZip(file) {
+  const entries = await readZipJsons(file, LIMITS.fileBytes);
+  if (entries.length === 0) throw new Error(tr('zip の中に JSON ファイルがありません。', 'There are no JSON files in the zip.'));
+  let categories = [];
+  const total = { skippedCategories: 0, skippedGroups: 0, skippedTags: 0 };
+  for (const entry of entries) {
+    const r = parseJsonText(entry.text, entry.name);
+    categories = mergeAppend(categories, r.categories).categories;
+    total.skippedCategories += r.skippedCategories;
+    total.skippedGroups += r.skippedGroups;
+    total.skippedTags += r.skippedTags;
+  }
+  return { categories, ...total, sourceFiles: entries.length };
+}
+
+// ファイル（JSON または zip）を読んで検証する。不正なら例外を投げる（データは一切変更しない）。
+export async function parseFile(file) {
+  if (file.size > LIMITS.fileBytes) throw new Error(tr('ファイルが大きすぎます（20MB まで）。', 'The file is too large (up to 20 MB).'));
+  if (await isZip(file)) return parseZip(file);
+  return parseJsonText(await file.text());
 }
 
 export const countTags = (categories) => categories.reduce((n, c) => n + catTags(c).length, 0);

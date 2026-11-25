@@ -2,6 +2,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { startServer, closeBrowser, openApp, seed, tag, devices } from '../helpers.mjs';
+import { buildZip } from '../zip-builder.mjs';
 
 let server;
 before(async () => { server = await startServer(); });
@@ -152,5 +153,31 @@ test('スクロールできる一覧の中でも、並べ替えができる', as
   await page.waitForFunction(() => document.querySelector('#m-cats .m-main').textContent.startsWith('カテゴリー01'));
   assert.equal(await first(), 'カテゴリー01');
   assert.deepEqual(app.errors, []);
+  await app.close();
+});
+
+test('インポート：JSON を入れた zip も読める（中の JSON をまとめて追加）。読めないときは、今のデータを変えない', async () => {
+  const app = await openApp(server.url);
+  const { page } = app;
+  await seed(page, [{ id: 'c', categoryName: 'キャラ', groups: [{ id: 'g', name: '東方', tags: [tag('霊夢', 'reimu')] }] }]);
+  await page.click('.tab[data-view=manager]');
+  const zip = (entries) => ({ name: 'backup.zip', mimeType: 'application/zip', buffer: buildZip(entries) });
+  const one = JSON.stringify([{ categoryName: 'キャラ', groups: [{ name: '東方', tags: [{ name: '魔理沙', content: 'marisa' }] }] }]);
+  const two = JSON.stringify([{ categoryName: '背景', groups: [{ name: '室内', tags: [{ name: '部屋', content: 'room' }] }] }]);
+  await page.setInputFiles('#d-file', zip([{ name: 'one.json', data: one }, { name: 'sub/two.json', data: two }]));
+  await page.waitForFunction(() => document.querySelector('#dlg-import[open]'));
+  assert.match(await page.textContent('#i-summary'), /zip 内の JSON：2 件/);
+  await page.click('#i-append');
+  await page.waitForFunction(() => document.querySelector('#m-cats').textContent.includes('背景'));
+  assert.match(await page.textContent('#m-cats'), /キャラ/);
+  // 読めない zip：知らせて、データは変えない
+  let alerted = '';
+  page.on('dialog', (d) => { alerted = d.message(); d.accept(); });
+  await page.setInputFiles('#d-file', zip([{ name: 'bad.json', data: '{oops' }]));
+  await page.waitForFunction(() => true);
+  await page.waitForTimeout(300);
+  assert.match(alerted, /bad\.json/);
+  assert.match(alerted, /変更されていません/);
+  assert.ok(!(await page.isVisible('#dlg-import[open]')));
   await app.close();
 });

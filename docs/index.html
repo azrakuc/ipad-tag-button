@@ -171,12 +171,12 @@
 
       <div class="card-box">
         <div class="box-head"><h2 data-en="Data">データ</h2></div>
-        <p class="muted" data-en="You can back up your categories and tags by exporting them to a JSON file. JSON exported from the original Chrome extension (tag_button) can also be imported as is.">カテゴリーとタグを JSON ファイルに書き出してバックアップできます。元の Chrome 拡張機能（tag_button）の JSON もそのまま読み込めます。</p>
+        <p class="muted" data-en="You can back up your categories and tags by exporting them to a JSON file. JSON exported from the original Chrome extension (tag_button) can also be imported as is. A zip containing JSON files can be imported too (all the JSON files in it are combined).">カテゴリーとタグを JSON ファイルに書き出してバックアップできます。元の Chrome 拡張機能（tag_button）の JSON もそのまま読み込めます。JSON を入れた zip も読み込めます（中のすべての JSON をまとめて読みます）。</p>
         <div class="row-actions">
           <button id="d-export" class="btn" type="button" data-en="Export">エクスポート</button>
           <button id="d-share" class="btn" type="button" hidden data-en="Share…">共有…</button>
           <button id="d-import" class="btn" type="button" data-en="Import">インポート</button>
-          <input id="d-file" type="file" accept="application/json,.json" hidden>
+          <input id="d-file" type="file" accept="application/json,.json,application/zip,.zip" hidden>
         </div>
         <p id="d-last" class="muted"></p>
       </div>

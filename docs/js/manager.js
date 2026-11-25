@@ -346,11 +346,13 @@ async function onFileChosen() {
     alert(tr('読み込めませんでした。\n', 'Could not import.\n') + e.message + tr('\n\n今のデータは変更されていません。', '\n\nYour current data was not changed.'));
     return;
   }
-  const lines = [
+  const lines = [];
+  if (pending.sourceFiles) lines.push(tr(`zip 内の JSON：${pending.sourceFiles} 件`, `JSON files in the zip: ${pending.sourceFiles}`));
+  lines.push(
     tr(`カテゴリー：${pending.categories.length} 件`, `Categories: ${pending.categories.length}`),
     tr(`グループ：${IO.countGroups(pending.categories)} 件`, `Groups: ${IO.countGroups(pending.categories)}`),
     tr(`タグ：${IO.countTags(pending.categories)} 件`, `Tags: ${IO.countTags(pending.categories)}`),
-  ];
+  );
   const { skippedCategories: sc, skippedGroups: sg, skippedTags: st } = pending;
   if (sc || sg || st) {
     lines.push(tr(`読み飛ばし：カテゴリー ${sc} 件、グループ ${sg} 件、タグ ${st} 件（不正な内容、または大きすぎる項目）`, `Skipped: ${sc} categories, ${sg} groups, ${st} tags (invalid or too large)`));
